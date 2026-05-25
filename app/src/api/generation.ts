@@ -26,6 +26,10 @@ export interface GenerationRunCreate {
   top_p?: number
 }
 
+export function listGenerationRuns(): Promise<GenerationRun[]> {
+  return apiClient.get<GenerationRun[]>('/v1/generation-runs')
+}
+
 export function createGenerationRun(payload: GenerationRunCreate): Promise<GenerationRun> {
   return apiClient.post<GenerationRun>('/v1/generation-runs', payload)
 }

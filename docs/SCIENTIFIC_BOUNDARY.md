@@ -78,6 +78,18 @@ LOCAL_DEMO 使用基于电荷、疏水性等理化性质的启发式公式。这
 - 任务状态标记为 `CANCELLED`，而非 `SUCCEEDED` 或 `FAILED`。
 - 取消不会导致任何虚假的实验结论。
 
-## 8. 审查机制
+## 8. 导出报告的科学边界
+
+所有导出的报告（CSV、FASTA、JSON、Markdown）均包含以下声明：
+
+> **Computational prediction only. Not experimentally validated.**
+> **LOCAL_REAL_SMOKE generates sequences only and does not validate antimicrobial activity.**
+> **amp_score and MIC values are not computed unless real discriminator/scorer models are executed.**
+
+- 导出 CSV 时，空分数显示为空单元格，不填充 0。
+- 导出 Markdown 报告时，包含 "Next Experimental Validation" 建议章节（合成、MIC、MBC、溶血、细胞毒性）。
+- 用户不得将导出结果作为实验验证结论直接发表或用于临床决策。
+
+## 9. 审查机制
 
 所有版本发布前必须经过 **ARIS-Lite 四角色审查**（详见 [ARIS_LITE_REVIEW_PROTOCOL.md](./ARIS_LITE_REVIEW_PROTOCOL.md)），其中 **Scientific Boundary Reviewer** 负责确保以上规则得到遵守。

@@ -94,6 +94,23 @@
 3. 点击 **Generate**。
 4. **预期结果**：立即显示红色 BLOCKED 状态，提示 "Count exceeds LOCAL_REAL_SMOKE max limit of 2"。
 
+### 9. Report Export（2 分钟）
+
+1. 从左侧菜单进入 **Reports**。
+2. **Export All Candidates CSV**：点击按钮，浏览器下载 CSV 文件。
+3. 用文本编辑器打开 CSV，确认：
+   - 包含 `sequence`, `length`, `amp_score`, `mic_ecoli`, `mic_saureus` 等列
+   - `amp_score` 为空（不是 0）对于 LOCAL_REAL_SMOKE 生成的肽
+4. **Export All Candidates FASTA**：点击按钮，确认 header 格式为 `>peptide_{id}|status=...|source=...`
+5. **Export Tasks JSON**：点击按钮，确认 JSON 包含任务列表和 `cancel_requested` 字段。
+6. 在 **Select Generation Run** 下拉菜单中选择一个 run（如 LOCAL_REAL_SMOKE 的 run）。
+7. **Export Run JSON**：点击按钮，确认 JSON 包含 `generation_run`, `task`, `peptides`, `scientific_boundary`。
+8. **Export Selected Run Markdown Report**：点击按钮，用文本编辑器打开 `.md` 文件，确认：
+   - 包含 `# AMPGen Generation Run Report`
+   - 包含 `## Scientific Boundary`
+   - AMP Score / MIC 显示为 **Not computed**
+   - 包含 `## Next Experimental Validation`（合成、MIC、MBC、溶血、细胞毒性）
+
 ---
 
 ## 演示结束

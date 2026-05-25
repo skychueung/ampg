@@ -2,11 +2,11 @@
 
 ## Current Release
 
-**v0.4-task-cancellation**
+**v0.5-report-export**
 
 Release Date: 2026-05-25
-Git Tag: `v0.4-task-cancellation`
-Git Commit: `c1ca355`
+Git Tag: `v0.5-report-export`
+Git Commit: (to be sealed)
 
 ## Capability Matrix
 
@@ -26,6 +26,13 @@ Git Commit: `c1ca355`
 | v0.4 | Frontend cancel button | ✅ |
 | v0.4 | Cancel smoke test script | ✅ |
 | v0.4 | pytest 29/29 pass | ✅ |
+| v0.5 | Report Export Center (real API) | ✅ |
+| v0.5 | Candidates CSV / FASTA export | ✅ |
+| v0.5 | Tasks JSON export | ✅ |
+| v0.5 | Generation Run JSON / Markdown report | ✅ |
+| v0.5 | List generation runs API | ✅ |
+| v0.5 | Export smoke test script | ✅ |
+| v0.5 | pytest 36/36 pass | ✅ |
 | — | Git baseline initialized | ✅ |
 | — | One-click start/stop scripts | ✅ |
 | — | Health check + smoke tests | ✅ |

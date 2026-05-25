@@ -211,7 +211,48 @@ Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/tasks/{task_id}/cancel" -Me
 
 ---
 
-## 11. 如何备份当前项目
+## 11. 如何导出报告
+
+### 通过前端 ReportExport 页面
+
+1. 打开 **ReportExport** 页面。
+2. 选择 **Generation Run**（下拉菜单显示所有历史 run）。
+3. 点击以下按钮导出：
+   - **Export All Candidates CSV** — 导出所有肽序列为 CSV（utf-8-sig，兼容 Excel）
+   - **Export All Candidates FASTA** — 导出 FASTA 格式
+   - **Export Tasks JSON** — 导出任务记录 JSON
+   - **Export Run JSON** — 导出所选 run 的完整 JSON 报告
+   - **Export Selected Run Markdown Report** — 导出 Markdown 报告
+
+### 通过 API
+
+```powershell
+# CSV
+Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/reports/candidates.csv" -OutFile "candidates.csv"
+
+# FASTA
+Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/reports/candidates.fasta" -OutFile "candidates.fasta"
+
+# Tasks JSON
+Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/reports/tasks.json" -OutFile "tasks.json"
+
+# Run JSON (replace {run_id})
+Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/reports/generation-runs/{run_id}.json" -OutFile "run.json"
+
+# Run Markdown
+Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/reports/generation-runs/{run_id}.md" -OutFile "run.md"
+```
+
+### 导出内容说明
+
+- **CSV**：空分数（`amp_score`, `mic_ecoli`, `mic_saureus`）显示为空单元格，不是 0。
+- **FASTA**：跳过空序列，header 包含 id/status/source/length/charge。
+- **JSON 报告**：包含 `scientific_boundary` 字段，明确标注计算预测未经验证。
+- **Markdown 报告**：包含完整的运行摘要、肽表格、科学边界声明、后续实验验证建议。
+
+---
+
+## 12. 如何备份当前项目
 
 ### Git 备份（推荐）
 

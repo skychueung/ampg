@@ -14,12 +14,20 @@ import {
   ChevronDown,
   Calendar,
   Trash2,
-  Loader2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { DEMO_PEPTIDES } from '@/data/demoData'
 import { useTranslation } from '@/i18n/LanguageContext'
+import {
+  exportCandidatesCsv,
+  exportCandidatesFasta,
+  exportTasksJson,
+  exportGenerationRunJson,
+  exportGenerationRunMarkdown,
+} from '@/api/reports'
+import { listGenerationRuns } from '@/api/generation'
+import type { GenerationRun } from '@/api/generation'
 
 /* -------------------------------------------------------------------------- */
 /*                                    Types                                   */
@@ -127,49 +135,6 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'VALIDATED', label: 'Validated' },
   { value: 'FILTERED', label: 'Filtered' },
   { value: 'GENERATED', label: 'Generated' },
-]
-
-const DEMO_HISTORY: ExportHistoryItem[] = [
-  {
-    id: 'EXP-20240117-001',
-    date: new Date(Date.now() - 2 * 3600 * 1000),
-    format: 'csv',
-    formatLabel: 'CSV',
-    scope: 'All',
-    rows: 312,
-    size: '45 KB',
-    status: 'Ready',
-  },
-  {
-    id: 'EXP-20240116-003',
-    date: new Date(Date.now() - 26 * 3600 * 1000),
-    format: 'fasta',
-    formatLabel: 'FASTA',
-    scope: 'Top 50',
-    rows: 50,
-    size: '8 KB',
-    status: 'Ready',
-  },
-  {
-    id: 'EXP-20240116-002',
-    date: new Date(Date.now() - 28 * 3600 * 1000),
-    format: 'pdf',
-    formatLabel: 'PDF',
-    scope: 'All',
-    rows: 312,
-    size: '180 KB',
-    status: 'Ready',
-  },
-  {
-    id: 'EXP-20240115-001',
-    date: new Date(Date.now() - 48 * 3600 * 1000),
-    format: 'xlsx',
-    formatLabel: 'XLSX',
-    scope: 'Filtered',
-    rows: 89,
-    size: '22 KB',
-    status: 'Expired',
-  },
 ]
 
 /* -------------------------------------------------------------------------- */
@@ -316,12 +281,13 @@ export default function ReportExport() {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeMetadata, setIncludeMetadata] = useState(true)
   const [disclaimerChecked, setDisclaimerChecked] = useState(false)
-  const [history, setHistory] = useState<ExportHistoryItem[]>(DEMO_HISTORY)
+  const [history, setHistory] = useState<ExportHistoryItem[]>([])
   const [showExportModal, setShowExportModal] = useState(false)
-  const [exportProgress, setExportProgress] = useState(0)
-  const [exportComplete, setExportComplete] = useState(false)
-  const [currentExportId, setCurrentExportId] = useState('')
   const [disclaimerPulse, setDisclaimerPulse] = useState(true)
+  const [runs, setRuns] = useState<GenerationRun[]>([])
+  const [selectedRunId, setSelectedRunId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   /* -- Preview content -- */
   const previewContent = useMemo(() => getPreviewForFormat(selectedFormat), [selectedFormat])
@@ -333,57 +299,54 @@ export default function ReportExport() {
     return () => clearTimeout(t1)
   }, [])
 
-  /* -- Export handler -- */
-  const handleExport = useCallback(() => {
+  /* -- Load generation runs -- */
+  useEffect(() => {
+    listGenerationRuns()
+      .then((data) => {
+        setRuns(data)
+        if (data.length > 0) setSelectedRunId(data[0].id)
+      })
+      .catch((err) => setErrorMsg(err.message || 'Failed to load generation runs'))
+  }, [])
+
+  /* -- Real export handlers -- */
+  const _doExport = useCallback(async (fn: () => Promise<void>, label: string) => {
     if (!disclaimerChecked) return
-    setShowExportModal(true)
-    setExportProgress(0)
-    setExportComplete(false)
+    setLoading(true)
+    setErrorMsg(null)
+    try {
+      await fn()
+      setHistory((prev) => [
+        {
+          id: `EXP-${format(new Date(), 'yyyyMMdd')}-${String(prev.length + 1).padStart(3, '0')}`,
+          date: new Date(),
+          format: label,
+          formatLabel: label,
+          scope: 'All',
+          rows: 0,
+          size: '-',
+          status: 'Ready',
+        },
+        ...prev,
+      ])
+    } catch (err: any) {
+      setErrorMsg(err.message || `Failed to export ${label}`)
+    } finally {
+      setLoading(false)
+    }
+  }, [disclaimerChecked])
 
-    const steps = 10
-    let step = 0
-    const interval = setInterval(() => {
-      step++
-      setExportProgress(Math.round((step / steps) * 100))
-      if (step >= steps) {
-        clearInterval(interval)
-        setExportComplete(true)
-        const fmt = EXPORT_FORMATS.find((f) => f.id === selectedFormat)
-        const newId = `EXP-${format(new Date(), 'yyyyMMdd')}-${String(history.length + 1).padStart(3, '0')}`
-        setCurrentExportId(newId)
-        setHistory((prev) => [
-          {
-            id: newId,
-            date: new Date(),
-            format: selectedFormat,
-            formatLabel: fmt?.extension.replace('.', '').toUpperCase() || 'CSV',
-            scope: SCOPE_OPTIONS.find((s) => s.value === scope)?.label || 'All',
-            rows: previewStats.rows,
-            size: previewStats.size.replace('~', ''),
-            status: 'Ready',
-          },
-          ...prev,
-        ])
-      }
-    }, 300)
-  }, [disclaimerChecked, selectedFormat, scope, previewStats, history.length])
-
-  /* -- Download handler -- */
-  const handleDownload = useCallback(() => {
-    const fmt = EXPORT_FORMATS.find((f) => f.id === selectedFormat)
-    const ext = fmt?.extension || '.csv'
-    const filename = `ampgen_report_${format(new Date(), 'yyyyMMdd')}${ext}`
-    const blob = new Blob([previewContent], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    setShowExportModal(false)
-  }, [selectedFormat, previewContent])
+  const handleExportCsv = useCallback(() => _doExport(exportCandidatesCsv, 'CSV'), [_doExport])
+  const handleExportFasta = useCallback(() => _doExport(exportCandidatesFasta, 'FASTA'), [_doExport])
+  const handleExportTasksJson = useCallback(() => _doExport(exportTasksJson, 'JSON'), [_doExport])
+  const handleExportRunJson = useCallback(() => {
+    if (!selectedRunId) { setErrorMsg('Please select a generation run'); return }
+    _doExport(() => exportGenerationRunJson(selectedRunId), 'Run JSON')
+  }, [_doExport, selectedRunId])
+  const handleExportRunMd = useCallback(() => {
+    if (!selectedRunId) { setErrorMsg('Please select a generation run'); return }
+    _doExport(() => exportGenerationRunMarkdown(selectedRunId), 'Run MD')
+  }, [_doExport, selectedRunId])
 
   /* -- Delete history item -- */
   const deleteHistoryItem = useCallback((id: string) => {
@@ -588,27 +551,79 @@ export default function ReportExport() {
             </label>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowExportModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#111827] text-[14px] font-medium rounded-[6px] hover:bg-[#F9FAFB] transition-colors"
+          {/* Error Banner */}
+          {errorMsg && (
+            <div className="p-3 rounded-[6px] bg-[#FEF2F2] border border-[#FECACA] flex items-start gap-2.5">
+              <AlertTriangle size={16} className="text-[#DC2626] mt-0.5 flex-shrink-0" />
+              <p className="text-[13px] text-[#B91C1C]">{errorMsg}</p>
+            </div>
+          )}
+
+          {/* Generation Run Selector */}
+          <div>
+            <label className="block text-[12px] font-medium text-[#6B7280] uppercase tracking-[0.05em] mb-1.5">
+              Select Generation Run
+            </label>
+            <select
+              value={selectedRunId ?? ''}
+              onChange={(e) => setSelectedRunId(Number(e.target.value))}
+              className="w-full h-[36px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[6px] px-3 text-[14px] text-[#111827] focus:outline-none focus:border-[#14B8A6]"
             >
-              <Eye size={14} />
-              {t('common.preview') as string}
-            </button>
+              {runs.length === 0 && <option value="">No runs available</option>}
+              {runs.map((run) => (
+                <option key={run.id} value={run.id}>
+                  Run #{run.id} — {run.backend} — {run.status} — {run.count} peptides
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Real Export Buttons */}
+          <div className="space-y-2 pt-2">
+            <p className="text-[12px] font-medium text-[#6B7280] uppercase tracking-[0.05em]">
+              Export from Real Database
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleExportCsv}
+                disabled={!disclaimerChecked || loading}
+                className="flex items-center gap-2 px-3 py-2 bg-[#ECFDF5] text-[#059669] text-[13px] font-medium rounded-[6px] border border-[#A7F3D0] hover:bg-[#D1FAE5] transition-colors disabled:opacity-50"
+              >
+                <FileSpreadsheet size={14} />
+                {loading ? 'Exporting...' : 'Export All Candidates CSV'}
+              </button>
+              <button
+                onClick={handleExportFasta}
+                disabled={!disclaimerChecked || loading}
+                className="flex items-center gap-2 px-3 py-2 bg-[#F5F3FF] text-[#8B5CF6] text-[13px] font-medium rounded-[6px] border border-[#DDD6FE] hover:bg-[#EDE9FE] transition-colors disabled:opacity-50"
+              >
+                <Dna size={14} />
+                {loading ? 'Exporting...' : 'Export All Candidates FASTA'}
+              </button>
+              <button
+                onClick={handleExportTasksJson}
+                disabled={!disclaimerChecked || loading}
+                className="flex items-center gap-2 px-3 py-2 bg-[#F0F9FF] text-[#0284C7] text-[13px] font-medium rounded-[6px] border border-[#BAE6FD] hover:bg-[#E0F2FE] transition-colors disabled:opacity-50"
+              >
+                <BarChart3 size={14} />
+                {loading ? 'Exporting...' : 'Export Tasks JSON'}
+              </button>
+              <button
+                onClick={handleExportRunJson}
+                disabled={!disclaimerChecked || loading || !selectedRunId}
+                className="flex items-center gap-2 px-3 py-2 bg-[#FFF7ED] text-[#D97706] text-[13px] font-medium rounded-[6px] border border-[#FED7AA] hover:bg-[#FFEDD5] transition-colors disabled:opacity-50"
+              >
+                <FileText size={14} />
+                {loading ? 'Exporting...' : 'Export Run JSON'}
+              </button>
+            </div>
             <button
-              onClick={handleExport}
-              disabled={!disclaimerChecked}
-              className={cn(
-                'inline-flex items-center gap-2 px-4 py-2 text-[14px] font-medium rounded-[6px] transition-colors',
-                disclaimerChecked
-                  ? 'bg-[#14B8A6] text-white hover:bg-[#0D9488]'
-                  : 'bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed'
-              )}
+              onClick={handleExportRunMd}
+              disabled={!disclaimerChecked || loading || !selectedRunId}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#F3F4F6] text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#E5E7EB] transition-colors disabled:opacity-50"
             >
-              <Download size={14} />
-              {t('common.export') as string}
+              <FileText size={14} />
+              {loading ? 'Exporting...' : 'Export Selected Run Markdown Report'}
             </button>
           </div>
         </div>
@@ -832,11 +847,7 @@ export default function ReportExport() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"
-              onClick={() => {
-                if (exportComplete) {
-                  setShowExportModal(false)
-                }
-              }}
+              onClick={() => setShowExportModal(false)}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -846,90 +857,45 @@ export default function ReportExport() {
                 className="bg-white rounded-[12px] shadow-xl w-[440px] p-6"
                 onClick={(e) => e.stopPropagation()}
               >
-                {!exportComplete ? (
-                  <>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-10 h-10 rounded-full bg-[#F0DFA] flex items-center justify-center">
-                        <Loader2 size={20} className="text-[#14B8A6] animate-spin" />
-                      </div>
-                      <div>
-                        <h3 className="text-[16px] font-semibold text-[#111827]">Generating Report</h3>
-                        <p className="text-[13px] text-[#6B7280]">{selectedFormatConfig?.name}</p>
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                    <Eye size={20} className="text-[#10B981]" />
+                  </div>
+                  <div>
+                    <h3 className="text-[16px] font-semibold text-[#111827]">Report Preview</h3>
+                    <p className="text-[13px] text-[#6B7280]">{selectedFormatConfig?.name}</p>
+                  </div>
+                </div>
 
-                    {/* Progress Bar */}
-                    <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden mb-2">
-                      <motion.div
-                        className="h-full bg-[#14B8A6] rounded-full"
-                        animate={{ width: `${exportProgress}%` }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[12px] text-[#6B7280] mb-4">
-                      <span>Processing...</span>
-                      <span>{exportProgress}%</span>
-                    </div>
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] p-4 mb-5 space-y-2">
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[#6B7280]">Format</span>
+                    <span className="text-[#111827] font-medium">{selectedFormatConfig?.name}</span>
+                  </div>
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[#6B7280]">Rows</span>
+                    <span className="text-[#111827] font-medium">{previewStats.rows}</span>
+                  </div>
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[#6B7280]">Size</span>
+                    <span className="text-[#111827] font-medium">{previewStats.size}</span>
+                  </div>
+                </div>
 
-                    <p className="text-[12px] text-[#9CA3AF]">
-                      This may take a few moments depending on the export scope.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                        <Check size={20} className="text-[#10B981]" />
-                      </div>
-                      <div>
-                        <h3 className="text-[16px] font-semibold text-[#111827]">{t('reports.exportSuccess') as string}</h3>
-                        <p className="text-[13px] text-[#6B7280]">{currentExportId}</p>
-                      </div>
-                    </div>
+                <div className="bg-[#FFFBEB] border border-[#FCD34D] rounded-[6px] p-3 mb-5">
+                  <p className="text-[12px] text-[#92400E]">
+                    <strong>Remember:</strong> Computational prediction only. Not experimentally validated.
+                  </p>
+                </div>
 
-                    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] p-4 mb-5 space-y-2">
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-[#6B7280]">Format</span>
-                        <span className="text-[#111827] font-medium">{selectedFormatConfig?.name}</span>
-                      </div>
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-[#6B7280]">Rows</span>
-                        <span className="text-[#111827] font-medium">{previewStats.rows}</span>
-                      </div>
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-[#6B7280]">Size</span>
-                        <span className="text-[#111827] font-medium">{previewStats.size}</span>
-                      </div>
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-[#6B7280]">Title</span>
-                        <span className="text-[#111827] font-medium">{reportTitle}</span>
-                      </div>
-                    </div>
-
-                    {/* Success disclaimer */}
-                    <div className="bg-[#FFFBEB] border border-[#FCD34D] rounded-[6px] p-3 mb-5">
-                      <p className="text-[12px] text-[#92400E]">
-                        <strong>Remember:</strong> {t('reports.aiGenerated') as string}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleDownload}
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#14B8A6] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0D9488] transition-colors"
-                      >
-                        <Download size={14} />
-                        {t('reports.downloadReport') as string}
-                      </button>
-                      <button
-                        onClick={() => setShowExportModal(false)}
-                        className="px-4 py-2 border border-[#E5E7EB] text-[#111827] text-[14px] font-medium rounded-[6px] hover:bg-[#F9FAFB] transition-colors"
-                      >
-                        {t('common.close') as string}
-                      </button>
-                    </div>
-                  </>
-                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowExportModal(false)}
+                    className="flex-1 px-4 py-2 border border-[#E5E7EB] text-[#111827] text-[14px] font-medium rounded-[6px] hover:bg-[#F9FAFB] transition-colors"
+                  >
+                    {t('common.close') as string}
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           </>

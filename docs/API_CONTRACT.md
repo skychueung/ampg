@@ -151,6 +151,24 @@ All endpoints are prefixed with `/api` or `/api/v1`.
 
 **Response:** Same as single item above.
 
+### GET /api/v1/generation-runs
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "task_id": 1,
+    "mode": "Sequence-based",
+    "backend": "LOCAL_DEMO",
+    "count": 2,
+    "status": "SUCCEEDED",
+    "created_at": "2026-05-25T10:00:00",
+    "completed_at": "2026-05-25T10:00:03"
+  }
+]
+```
+
 ### POST /api/v1/tasks/{task_id}/cancel
 
 **Behavior:**
@@ -179,6 +197,50 @@ All endpoints are prefixed with `/api` or `/api/v1`.
   "disclaimer": "Computational prediction only..."
 }
 ```
+
+### GET /api/v1/reports/candidates.csv
+
+**Response:** `text/csv; charset=utf-8-sig` attachment.
+
+Columns: `id, sequence, length, net_charge, hydrophobic_fraction, valid_aa, status, source, generation_run_id, amp_score, mic_ecoli, mic_saureus, notes, created_at`
+
+### GET /api/v1/reports/candidates.fasta
+
+**Response:** `text/plain` FASTA attachment.
+
+Header format: `>peptide_{id}|status={status}|source={source}|length={length}|charge={net_charge}`
+
+### GET /api/v1/reports/tasks.json
+
+**Response:**
+```json
+{
+  "tasks": [...],
+  "total": 15,
+  "disclaimer": "Computational prediction only..."
+}
+```
+
+### GET /api/v1/reports/generation-runs/{run_id}.json
+
+**Response:**
+```json
+{
+  "generation_run": { ... },
+  "task": { ... },
+  "peptides": [ ... ],
+  "scientific_boundary": {
+    "computational_only": true,
+    "disclaimer": "..."
+  },
+  "artifact_dir": "...",
+  "logs_available": true
+}
+```
+
+### GET /api/v1/reports/generation-runs/{run_id}.md
+
+**Response:** `text/markdown` attachment with full structured report including Scientific Boundary and Next Experimental Validation sections.
 
 ### GET /api/v1/tasks/{task_id}/logs
 

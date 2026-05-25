@@ -82,6 +82,11 @@ def create_generation_run(payload: GenerationRunCreate, db: Session = Depends(ge
         return run
 
 
+@router.get("", response_model=list[GenerationRunOut])
+def list_generation_runs(db: Session = Depends(get_db)):
+    return db.query(GenerationRun).order_by(GenerationRun.id.desc()).all()
+
+
 @router.get("/{run_id}", response_model=GenerationRunOut)
 def get_generation_run(run_id: int, db: Session = Depends(get_db)):
     run = db.query(GenerationRun).filter(GenerationRun.id == run_id).first()

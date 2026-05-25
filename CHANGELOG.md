@@ -1,5 +1,17 @@
 # AMPGen Agent Platform Changelog
 
+## v0.5-report-export (2026-05-25)
+
+### Added
+- **Report Export Center**: ReportExport page upgraded from demo data to real API-driven export center.
+- **Candidates CSV export**: `GET /reports/candidates.csv` with utf-8-sig encoding, all peptide fields, empty values for null scores.
+- **Candidates FASTA export**: `GET /reports/candidates.fasta` with `>peptide_{id}|status=|source=|length=|charge=` headers.
+- **Tasks JSON export**: `GET /reports/tasks.json` with full task metadata (including cancel fields).
+- **Generation Run JSON report**: `GET /reports/generation-runs/{id}.json` with run + task + peptides + scientific_boundary.
+- **Generation Run Markdown report**: `GET /reports/generation-runs/{id}.md` with full structured report including Scientific Boundary and Next Experimental Validation sections.
+- **List generation runs**: `GET /generation-runs` returns all runs for selection.
+- **Frontend export UI**: 5 export buttons (CSV, FASTA, Tasks JSON, Run JSON, Run Markdown) + run selector dropdown.
+
 ## v0.4-task-cancellation (2026-05-25)
 
 ### Added
