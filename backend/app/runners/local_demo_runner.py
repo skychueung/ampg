@@ -40,6 +40,22 @@ def run_local_demo_generation(db: Session, run: GenerationRun) -> dict:
 
     generated_count = 0
     for i in range(run.count):
+        # Check cancellation request
+        if task:
+            db.refresh(task)
+            if task.cancel_requested:
+                run.status = "CANCELLED"
+                run.completed_at = datetime.utcnow()
+                task.status = "CANCELLED"
+                task.cancelled_at = datetime.utcnow()
+                task.completed_at = datetime.utcnow()
+                task.message = "Task cancelled by user."
+                db.commit()
+                return {
+                    "status": "CANCELLED",
+                    "message": "Task cancelled by user.",
+                }
+
         length = random.randint(run.min_length or 15, run.max_length or 35)
         seq = _generate_sequence(length)
         filter_result = apply_amp_filter(seq)

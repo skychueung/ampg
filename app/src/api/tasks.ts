@@ -27,3 +27,7 @@ export function getTask(taskId: number): Promise<TaskRecord> {
 export function getTaskLogs(taskId: number): Promise<{ task_id: number; logs: string[]; artifact_logs?: Record<string, string[]>; disclaimer: string }> {
   return apiClient.get(`/v1/tasks/${taskId}/logs`)
 }
+
+export function cancelTask(taskId: number): Promise<{ status: string; task_id: number; message: string; disclaimer?: string }> {
+  return apiClient.post(`/v1/tasks/${taskId}/cancel`, {})
+}

@@ -151,6 +151,35 @@ All endpoints are prefixed with `/api` or `/api/v1`.
 
 **Response:** Same as single item above.
 
+### POST /api/v1/tasks/{task_id}/cancel
+
+**Behavior:**
+- Does NOT delete the task record.
+- Sets `cancel_requested = true` and `cancel_requested_at`.
+- If `process_pid` is known, sends SIGTERM to the subprocess.
+- Safe for PENDING and RUNNING tasks.
+- No-op for terminal states (SUCCEEDED, FAILED, BLOCKED, CANCELLED).
+
+**Response (200 CANCEL_REQUESTED):**
+```json
+{
+  "status": "CANCEL_REQUESTED",
+  "task_id": 1,
+  "message": "Cancellation requested. The task will stop at the next safe checkpoint.",
+  "disclaimer": "Computational prediction only..."
+}
+```
+
+**Response (200 terminal noop):**
+```json
+{
+  "status": "SUCCEEDED",
+  "task_id": 1,
+  "message": "Task is already in terminal state: SUCCEEDED. No action taken.",
+  "disclaimer": "Computational prediction only..."
+}
+```
+
 ### GET /api/v1/tasks/{task_id}/logs
 
 **Response:**

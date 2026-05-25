@@ -1,5 +1,14 @@
 # AMPGen Agent Platform Changelog
 
+## v0.4-task-cancellation (2026-05-25)
+
+### Added
+- **Safe task cancellation**: `POST /api/v1/tasks/{id}/cancel` sets `cancel_requested=true`. Runner polls `cancel_requested` every 1s and safely terminates subprocess (SIGTERM → 5s timeout → SIGKILL).
+- **PID tracking**: `Task.process_pid` stores subprocess PID for external termination.
+- **CANCELLED status**: Both `Task` and `GenerationRun` support `CANCELLED` terminal state.
+- **Frontend cancel button**: Generation and TaskCenter pages show "Cancel Task" button for `PENDING`/`RUNNING` tasks.
+- **Cancel smoke test**: `scripts/smoke_cancel_local_real.ps1` validates cancellation end-to-end.
+
 ## v0.3-local-real-async (2026-05-25)
 
 ### Added

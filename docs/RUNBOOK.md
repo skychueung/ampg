@@ -179,7 +179,39 @@ sqlite> .quit
 
 ---
 
-## 10. 如何备份当前项目
+## 10. 如何取消运行中任务
+
+### 通过前端
+
+1. **Generation 页面**：任务处于 `PENDING` 或 `RUNNING` 时，状态卡片下方会出现 **Cancel Task** 按钮。点击后发送取消请求，继续轮询直到状态变为 `CANCELLED`。
+2. **Task Center**：在任务列表或详情抽屉中，点击 `PENDING`/`RUNNING` 任务旁边的 **Cancel** 按钮。
+
+### 通过 API
+
+```powershell
+Invoke-WebRequest -Uri "http://127.0.0.1:8001/api/v1/tasks/{task_id}/cancel" -Method POST -UseBasicParsing
+```
+
+### 取消机制说明
+
+- **不会强杀 Python thread** — 线程继续运行，但在 `subprocess.Popen` 轮询循环中检查 `cancel_requested` 标志。
+- **会先 terminate subprocess** — 发送 SIGTERM，等待 5 秒。
+- **超时后 kill** — 如果 5 秒内未退出，发送 SIGKILL。
+- **保留 artifact_dir** — 已生成的 stdout/stderr 和文件不删除。
+- **最终状态为 CANCELLED** — 不是 FAILED，不是 SUCCEEDED。
+
+### CANCELLED vs FAILED
+
+| | CANCELLED | FAILED |
+|---|-----------|--------|
+| 原因 | 用户主动取消 | 程序出错 |
+| `error_message` | 无 | 有错误详情 |
+| `cancel_requested` | `true` | `false` |
+| artifact_dir | 保留 | 保留 |
+
+---
+
+## 11. 如何备份当前项目
 
 ### Git 备份（推荐）
 

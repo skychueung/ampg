@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils'
 import StatusBadge from '@/components/StatusBadge'
 import type { TaskStatus } from '@/components/StatusBadge'
 import { formatRelativeTime } from '@/data/demoData'
-import { listTasks, getTaskLogs } from '@/api/tasks'
+import { listTasks, getTaskLogs, cancelTask } from '@/api/tasks'
 import type { TaskRecord as ApiTaskRecord } from '@/api/tasks'
 import { useTranslation } from '@/i18n/LanguageContext'
 
@@ -77,6 +77,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'SUCCEEDED', label: 'Completed' },
   { key: 'FAILED', label: 'Failed' },
   { key: 'BLOCKED', label: 'Blocked' },
+  { key: 'CANCELLED', label: 'Cancelled' },
   { key: 'PENDING', label: 'Pending' },
 ]
 
@@ -86,6 +87,7 @@ const TAB_LABEL_KEYS: Record<string, string> = {
   SUCCEEDED: 'tasks.tabCompleted',
   FAILED: 'tasks.tabFailed',
   BLOCKED: 'tasks.tabBlocked',
+  CANCELLED: 'tasks.tabCancelled',
   PENDING: 'tasks.tabPending',
 }
 
@@ -289,6 +291,7 @@ export default function TaskCenter() {
       SUCCEEDED: tasks.filter((t) => t.status === 'SUCCEEDED').length,
       FAILED: tasks.filter((t) => t.status === 'FAILED').length,
       BLOCKED: tasks.filter((t) => t.status === 'BLOCKED').length,
+      CANCELLED: tasks.filter((t) => t.status === 'CANCELLED').length,
       PENDING: tasks.filter((t) => t.status === 'PENDING').length,
     }
     return { ...c, ALL: tasks.length, total: tasks.length }
@@ -315,10 +318,16 @@ export default function TaskCenter() {
     setToastData({ message: `Task #${taskId} queued for retry`, type: 'success' })
   }, [])
 
-  const cancelTask = useCallback((taskId: number) => {
-    setToastData({ message: `Task #${taskId} cancelled`, type: 'error' })
-    if (selectedTask?.id === taskId) setSelectedTask(null)
-  }, [selectedTask])
+  const handleCancelTask = useCallback(async (taskId: number) => {
+    try {
+      await cancelTask(taskId)
+      setToastData({ message: `Task #${taskId} cancellation requested`, type: 'success' })
+      // Refresh task list to reflect cancel_requested state
+      fetchTasks()
+    } catch (err) {
+      setToastData({ message: `Failed to cancel task #${taskId}`, type: 'error' })
+    }
+  }, [])
 
   const copyTaskId = useCallback((id: number) => {
     navigator.clipboard.writeText(`#${id}`).catch(() => {})
@@ -592,6 +601,9 @@ export default function TaskCenter() {
                         <span className="text-[#EF4444]">{task.errorMessage || (t('common.failed') as string)}</span>
                       )}
                       {task.status === 'PENDING' && (task.message || (t('tasks.outputWaiting') as string))}
+                      {task.status === 'CANCELLED' && (
+                        <span className="text-[#6B7280]">{task.message || 'Cancelled by user'}</span>
+                      )}
                       {task.status === 'BLOCKED' && (
                         <span className="text-[#D97706] font-medium">{task.message || task.errorMessage || (t('tasks.outputBlocked') as string)}</span>
                       )}
@@ -620,9 +632,9 @@ export default function TaskCenter() {
                           <RotateCcw size={14} />
                         </button>
                       )}
-                      {task.status === 'RUNNING' && (
+                      {(task.status === 'RUNNING' || task.status === 'PENDING') && (
                         <button
-                          onClick={() => cancelTask(task.id)}
+                          onClick={() => handleCancelTask(task.id)}
                           className="p-1.5 rounded-[6px] hover:bg-red-50 text-[#6B7280] hover:text-[#EF4444] transition-colors"
                           title={t('tasks.cancel') as string}
                         >
@@ -844,7 +856,18 @@ export default function TaskCenter() {
                   </div>
                 )}
 
-                {/* Error Message */}
+                {/* Cancelled Banner */}
+                {selectedTask.status === 'CANCELLED' && (
+                  <div className="bg-gray-50 border border-[#E5E7EB] rounded-[8px] p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Ban size={14} className="text-[#6B7280]" />
+                      <h3 className="text-[13px] font-semibold text-[#6B7280]">Cancelled</h3>
+                    </div>
+                    <p className="text-[12px] text-[#6B7280]">{selectedTask.message || 'Task was cancelled by user. Partial artifacts may be available in the logs below.'}</p>
+                  </div>
+                )}
+
+                {/* Error Message /*}
                 {selectedTask.errorMessage && selectedTask.status !== 'BLOCKED' && (
                   <div className="bg-red-50 border border-[#FECACA] rounded-[8px] p-4">
                     <div className="flex items-center gap-2 mb-1">
@@ -916,16 +939,16 @@ export default function TaskCenter() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-2">
-                  {selectedTask.status === 'RUNNING' && (
+                  {(selectedTask.status === 'RUNNING' || selectedTask.status === 'PENDING') && (
                     <>
                       <button
-                        onClick={() => cancelTask(selectedTask.id)}
+                        onClick={() => handleCancelTask(selectedTask.id)}
                         className="flex-1 px-3 py-2 border border-[#F59E0B] text-[#D97706] text-[13px] font-medium rounded-[6px] hover:bg-amber-50 transition-colors"
                       >
                         {t('tasks.pauseTask') as string}
                       </button>
                       <button
-                        onClick={() => cancelTask(selectedTask.id)}
+                        onClick={() => handleCancelTask(selectedTask.id)}
                         className="flex-1 px-3 py-2 text-[#EF4444] text-[13px] font-medium rounded-[6px] hover:bg-red-50 transition-colors"
                       >
                         {t('tasks.cancel') as string}

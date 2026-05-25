@@ -11,6 +11,10 @@ class TaskBase(BaseModel):
     message: Optional[str] = None
     log_text: Optional[str] = None
     artifact_dir: Optional[str] = None
+    cancel_requested: bool = False
+    cancel_requested_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+    process_pid: Optional[int] = None
 
 
 class TaskCreate(TaskBase):
@@ -24,6 +28,10 @@ class TaskUpdate(BaseModel):
     log_text: Optional[str] = None
     completed_at: Optional[datetime] = None
     error_message: Optional[str] = None
+    cancel_requested: Optional[bool] = None
+    cancel_requested_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+    process_pid: Optional[int] = None
 
 
 class TaskOut(TaskBase):

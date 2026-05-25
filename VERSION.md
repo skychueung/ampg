@@ -21,6 +21,11 @@ Git Commit: `20a014d`
 | v0.3 | LOCAL_REAL_SMOKE end-to-end (count=1) | ✅ |
 | v0.3 | pytest 24/24 pass | ✅ |
 | v0.3 | npm run build 0 errors | ✅ |
+| v0.4 | Safe task cancellation (cancel_requested + PID) | ✅ |
+| v0.4 | CANCELLED status for Task & GenerationRun | ✅ |
+| v0.4 | Frontend cancel button | ✅ |
+| v0.4 | Cancel smoke test script | ✅ |
+| v0.4 | pytest 29/29 pass | ✅ |
 | — | Git baseline initialized | ✅ |
 | — | One-click start/stop scripts | ✅ |
 | — | Health check + smoke tests | ✅ |
@@ -32,7 +37,6 @@ Git Commit: `20a014d`
 | Server production backend | P4+ |
 | XGBoost AMP discriminator | P4+ |
 | MIC scorer integration | P4+ |
-| Task cancellation API | P3.5+ |
 | WebSocket real-time push | P4+ |
 | Full ARIS multi-agent backend | P4+ |
 | ARIS-Lite automated review | P3.5+ |

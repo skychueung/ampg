@@ -45,9 +45,9 @@ def _worker(run_id: int, task_id: int, backend: str):
             db.commit()
             return
 
-        # Runner already updates SUCCEEDED/FAILED/BLOCKED status internally.
+        # Runner already updates SUCCEEDED/FAILED/BLOCKED/CANCELLED status internally.
         # Log unexpected statuses just in case.
-        if result["status"] not in ("SUCCEEDED", "FAILED", "BLOCKED"):
+        if result["status"] not in ("SUCCEEDED", "FAILED", "BLOCKED", "CANCELLED"):
             if task:
                 task.status = "FAILED"
                 task.error_message = f"Unexpected runner status: {result['status']}"

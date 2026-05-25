@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Boolean
 from sqlalchemy.sql import func
 from app.db import Base
 
@@ -18,3 +18,7 @@ class Task(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
     error_message = Column(Text, nullable=True)
+    cancel_requested = Column(Boolean, default=False, nullable=False)
+    cancel_requested_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    process_pid = Column(Integer, nullable=True)

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
-import { CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Loader2, Ban } from 'lucide-react'
 
-export type TaskStatus = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED'
+export type TaskStatus = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED' | 'CANCELLED'
 
 interface StatusBadgeProps {
   status: TaskStatus
@@ -49,6 +49,13 @@ const statusConfig: Record<TaskStatus, {
     textColor: 'text-[#6B7280]',
     borderColor: 'border-[#6B7280]',
     icon: Clock,
+  },
+  CANCELLED: {
+    label: 'Cancelled',
+    bgColor: 'bg-gray-100',
+    textColor: 'text-[#6B7280]',
+    borderColor: 'border-[#9CA3AF]',
+    icon: Ban,
   },
 }
 

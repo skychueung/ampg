@@ -14,20 +14,21 @@ import {
   SlidersHorizontal,
   Server,
   Cpu,
+  X,
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/LanguageContext'
 import Layout from '@/components/Layout'
 import StatusBadge from '@/components/StatusBadge'
 import { createGenerationRun, getGenerationRunPeptides } from '@/api/generation'
 import type { GenerationRun } from '@/api/generation'
-import { getTask, getTaskLogs, type TaskRecord } from '@/api/tasks'
+import { getTask, getTaskLogs, cancelTask, type TaskRecord } from '@/api/tasks'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 type GenMode = 'Sequence-based' | 'MSA-based' | 'MSA-conditional'
 type ModelBackend = 'LOCAL_DEMO' | 'LOCAL_REAL_SMOKE' | 'SERVER_PRODUCTION'
-type GenStatus = 'IDLE' | 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED'
+type GenStatus = 'IDLE' | 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED' | 'CANCELLED'
 
 interface GeneratedPeptide {
   id: string
@@ -230,7 +231,7 @@ export default function Generation() {
             )
           }
 
-          if (data.status === 'SUCCEEDED' || data.status === 'FAILED' || data.status === 'BLOCKED') {
+          if (data.status === 'SUCCEEDED' || data.status === 'FAILED' || data.status === 'BLOCKED' || data.status === 'CANCELLED') {
             if (intervalRef.current) {
               clearInterval(intervalRef.current)
               intervalRef.current = null
@@ -267,6 +268,18 @@ export default function Generation() {
       navigator.clipboard.writeText(taskId)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    }
+  }, [taskId])
+
+  const handleCancel = useCallback(async () => {
+    if (!taskId) return
+    const numericTaskId = parseInt(taskId, 10)
+    if (isNaN(numericTaskId)) return
+    try {
+      setGenStatus('CANCELLED')
+      await cancelTask(numericTaskId)
+    } catch (err: any) {
+      // Ignore API errors; polling will pick up real state
     }
   }, [taskId])
 
@@ -636,10 +649,38 @@ export default function Generation() {
                           ? 'RUNNING'
                           : genStatus === 'SUCCEEDED'
                             ? 'SUCCEEDED'
-                            : 'FAILED'
+                            : genStatus === 'CANCELLED'
+                              ? 'CANCELLED'
+                              : 'FAILED'
                   }
                 />
               </div>
+
+              {/* Cancel button */}
+              {(genStatus === 'PENDING' || genStatus === 'RUNNING') && taskId && (
+                <div className="mb-4">
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center gap-2 px-3 py-2 bg-[#FEF2F2] text-[#B91C1C] text-[13px] font-medium rounded-[6px] border border-[#FECACA] hover:bg-[#FEE2E2] transition-colors"
+                  >
+                    <X size={14} />
+                    Cancel Task
+                  </button>
+                </div>
+              )}
+
+              {/* CANCELLED message */}
+              {genStatus === 'CANCELLED' && (
+                <div className="mb-4 p-3 rounded-[6px] bg-[#F3F4F6] border border-[#E5E7EB] flex items-start gap-2.5">
+                  <X size={16} className="text-[#6B7280] mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[13px] font-medium text-[#374151]">Task Cancelled</p>
+                    <p className="text-[12px] text-[#6B7280] mt-0.5">
+                      The task was cancelled by user. Partial artifacts may be available in Task Center.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Frontend BLOCKED message */}
               {genStatus === 'BLOCKED' && !runResult?.message && (

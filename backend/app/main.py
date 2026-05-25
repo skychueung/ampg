@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db import Base, engine
+from app.db import Base, engine, run_migrations
 from app.routers import health, system, tasks, generation, peptides, filters, reports
 
 Base.metadata.create_all(bind=engine)
+run_migrations()
 
 app = FastAPI(
     title="AMPGen Agent Platform API",

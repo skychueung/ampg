@@ -70,6 +70,14 @@ LOCAL_DEMO 使用基于电荷、疏水性等理化性质的启发式公式。这
 - 不构成医疗、临床或商业建议。
 - 使用本平台输出导致的任何后果由使用者自行承担。
 
-## 7. 审查机制
+## 7. 取消任务不产生伪造结果
+
+当用户取消运行中的 `LOCAL_REAL_SMOKE` 任务时：
+- 已生成的部分序列如果已被写入数据库，保留其 `amp_score=null` 状态。
+- 未完成的序列不会被补全或填充假数据。
+- 任务状态标记为 `CANCELLED`，而非 `SUCCEEDED` 或 `FAILED`。
+- 取消不会导致任何虚假的实验结论。
+
+## 8. 审查机制
 
 所有版本发布前必须经过 **ARIS-Lite 四角色审查**（详见 [ARIS_LITE_REVIEW_PROTOCOL.md](./ARIS_LITE_REVIEW_PROTOCOL.md)），其中 **Scientific Boundary Reviewer** 负责确保以上规则得到遵守。

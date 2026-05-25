@@ -1,9 +1,13 @@
+import os
+import signal
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.task import Task
+from app.models.generation_run import GenerationRun
 from app.schemas.task import TaskCreate, TaskOut, TaskUpdate
 from app.config import DISCLAIMER
 
@@ -61,5 +65,49 @@ def get_task_logs(task_id: int, db: Session = Depends(get_db)):
         "task_id": task_id,
         "logs": logs,
         "artifact_logs": artifact_logs,
+        "disclaimer": DISCLAIMER,
+    }
+
+
+@router.post("/{task_id}/cancel")
+def cancel_task(task_id: int, db: Session = Depends(get_db)):
+    """Request cancellation of a running or pending task.
+
+    Does NOT delete the task record. Sets cancel_requested=True and
+    attempts to terminate the subprocess if process_pid is known.
+    """
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    terminal_statuses = ("SUCCEEDED", "FAILED", "BLOCKED", "CANCELLED")
+    if task.status in terminal_statuses:
+        return {
+            "status": task.status,
+            "task_id": task_id,
+            "message": f"Task is already in terminal state: {task.status}. No action taken.",
+            "disclaimer": DISCLAIMER,
+        }
+
+    # Mark cancellation request
+    task.cancel_requested = True
+    task.cancel_requested_at = datetime.utcnow()
+    db.commit()
+
+    # Attempt to terminate subprocess if PID is known
+    if task.process_pid:
+        try:
+            if hasattr(signal, "SIGTERM"):
+                os.kill(task.process_pid, signal.SIGTERM)
+            else:
+                # Windows fallback
+                os.kill(task.process_pid, signal.CTRL_BREAK_EVENT if hasattr(signal, "CTRL_BREAK_EVENT") else signal.SIGTERM)
+        except (OSError, ProcessLookupError):
+            pass  # Process may have already exited
+
+    return {
+        "status": "CANCEL_REQUESTED",
+        "task_id": task_id,
+        "message": "Cancellation requested. The task will stop at the next safe checkpoint.",
         "disclaimer": DISCLAIMER,
     }

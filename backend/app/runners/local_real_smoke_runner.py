@@ -8,6 +8,7 @@ Constraints:
 import csv
 import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from sqlalchemy.orm import Session
@@ -106,17 +107,53 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
             "message": f"Unknown generation mode: {mode}",
         }
 
-    # Execute subprocess
+    # Execute subprocess with cancellation support
+    proc = None
     try:
         with open(stdout_log, "w", encoding="utf-8") as out_f, open(stderr_log, "w", encoding="utf-8") as err_f:
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 cmd,
                 stdout=out_f,
                 stderr=err_f,
                 cwd=str(AMPGEN_ROOT),
-                timeout=600,
             )
-        returncode = proc.returncode
+            if task:
+                task.process_pid = proc.pid
+                db.commit()
+
+            # Poll loop: check cancellation every 1s
+            while proc.poll() is None:
+                time.sleep(1)
+                if task:
+                    db.refresh(task)
+                    if task.cancel_requested:
+                        proc.terminate()
+                        try:
+                            proc.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            proc.kill()
+                            proc.wait()
+                        # Cancellation handled below after loop
+                        break
+
+            # If we broke because of cancellation, proc.returncode may be None or negative
+            if task and task.cancel_requested:
+                run.status = "CANCELLED"
+                run.completed_at = datetime.utcnow()
+                task.status = "CANCELLED"
+                task.cancelled_at = datetime.utcnow()
+                task.completed_at = datetime.utcnow()
+                task.message = "Task cancelled by user."
+                task.artifact_dir = str(artifact_subdir)
+                db.commit()
+                return {
+                    "status": "CANCELLED",
+                    "message": "Task cancelled by user.",
+                    "artifact_dir": str(artifact_subdir),
+                }
+
+            returncode = proc.returncode
+
     except subprocess.TimeoutExpired:
         returncode = -1
         with open(stderr_log, "a", encoding="utf-8") as f:
