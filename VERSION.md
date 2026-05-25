@@ -1,0 +1,38 @@
+# AMPGen Agent Platform — Version Matrix
+
+## Current Release
+
+**v0.3-local-real-async**
+
+Release Date: 2026-05-25
+Git Tag: `v0.3-local-real-async`
+Git Commit: `20a014d`
+
+## Capability Matrix
+
+| Version | Capability | Status |
+|---------|-----------|--------|
+| v0.1 | Frontend demo (mock data) | ✅ |
+| v0.2 | Backend + local real smoke (sync blocking) | ✅ |
+| v0.3 | Frontend real API integration | ✅ |
+| v0.3 | Async task execution (threading.Thread) | ✅ |
+| v0.3 | Frontend polling (3s interval) | ✅ |
+| v0.3 | TaskCenter live logs + artifact_logs | ✅ |
+| v0.3 | LOCAL_REAL_SMOKE end-to-end (count=1) | ✅ |
+| v0.3 | pytest 24/24 pass | ✅ |
+| v0.3 | npm run build 0 errors | ✅ |
+| — | Git baseline initialized | ✅ |
+| — | One-click start/stop scripts | ✅ |
+| — | Health check + smoke tests | ✅ |
+
+## Upcoming (Not in v0.3)
+
+| Capability | Target |
+|-----------|--------|
+| Server production backend | P4+ |
+| XGBoost AMP discriminator | P4+ |
+| MIC scorer integration | P4+ |
+| Task cancellation API | P3.5+ |
+| WebSocket real-time push | P4+ |
+| Full ARIS multi-agent backend | P4+ |
+| ARIS-Lite automated review | P3.5+ |
