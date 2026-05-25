@@ -57,17 +57,26 @@ def _worker(run_id: int, task_id: int, backend: str):
 
     except Exception as e:
         tb = traceback.format_exc()
-        if task:
-            task.status = "FAILED"
-            task.error_message = str(e)
-            current_log = task.log_text or ""
-            task.log_text = current_log + f"\n[ERROR] {tb}"
-            db.commit()
-
-        run = db.query(GenerationRun).filter(GenerationRun.id == run_id).first()
-        if run:
-            run.status = "FAILED"
-            db.commit()
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        try:
+            if task:
+                task.status = "FAILED"
+                task.error_message = str(e)
+                current_log = task.log_text or ""
+                task.log_text = current_log + f"\n[ERROR] {tb}"
+                db.commit()
+        except Exception:
+            pass
+        try:
+            run = db.query(GenerationRun).filter(GenerationRun.id == run_id).first()
+            if run:
+                run.status = "FAILED"
+                db.commit()
+        except Exception:
+            pass
     finally:
         db.close()
 

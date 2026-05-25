@@ -2,11 +2,11 @@
 
 ## Current Release
 
-**v0.3-local-real-async**
+**v0.4-task-cancellation**
 
 Release Date: 2026-05-25
-Git Tag: `v0.3-local-real-async`
-Git Commit: `20a014d`
+Git Tag: `v0.4-task-cancellation`
+Git Commit: `c1ca355`
 
 ## Capability Matrix
 
