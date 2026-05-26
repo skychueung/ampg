@@ -12,9 +12,11 @@
 
 | 字段 | LOCAL_DEMO | LOCAL_REAL_SMOKE | SERVER_PRODUCTION |
 |------|-----------|------------------|-------------------|
-| `amp_score` | 启发式公式（非模型） | **null** | 未来接 XGBoost |
-| `mic_ecoli` | 启发式公式（非模型） | **null** | 未来接 MIC scorer |
-| `mic_saureus` | 启发式公式（非模型） | **null** | 未来接 MIC scorer |
+| `amp_score` | **null**（v0.5.1-hotfix 后） | **null** | 未来接 XGBoost |
+| `mic_ecoli` | **null**（v0.5.1-hotfix 后） | **null** | 未来接 MIC scorer |
+| `mic_saureus` | **null**（v0.5.1-hotfix 后） | **null** | 未来接 MIC scorer |
+| `toxicity_risk` | **null**（v0.5.1-hotfix 后） | **null** | 未来接毒性预测模型 |
+| `hemolysis_risk` | **null**（v0.5.1-hotfix 后） | **null** | 未来接溶血预测模型 |
 
 ### 为什么必须为空？
 
@@ -22,12 +24,17 @@
 2. **防止误用**：空值迫使用户意识到这些指标尚未计算。
 3. **法规合规**：计算生物学工具应避免输出可能被误解为实验数据的数值。
 
-### Demo 模式的启发式公式
+### 为什么 LOCAL_DEMO 分数必须为空？
 
-LOCAL_DEMO 使用基于电荷、疏水性等理化性质的启发式公式。这些值：
-- 仅用于 UI 演示和快速筛选。
-- **不能**替代真实模型预测。
-- **不能**作为实验设计的唯一依据。
+在 v0.5.1-hotfix 之前，LOCAL_DEMO 曾使用基于电荷、疏水性的启发式公式生成假 `amp_score` 和假 `mic_ecoli` / `mic_saureus`。这些假值：
+- 容易被误解为真实模型预测结果。
+- 违反科学诚信原则。
+- 可能导致用户基于假数据做出错误实验决策。
+
+v0.5.1-hotfix 已彻底移除这些假值：
+- LOCAL_DEMO 的 `amp_score`、`mic_ecoli`、`mic_saureus`、`toxicity_risk`、`hemolysis_risk` 全部写入 `NULL`。
+- 历史数据库中的假分数已通过一次性修复脚本清空。
+- 前端显示为空时统一标注 **"Not computed"**，不显示 0。
 
 ## 3. Demo 结果 ≠ 实验数据
 
@@ -78,7 +85,15 @@ LOCAL_DEMO 使用基于电荷、疏水性等理化性质的启发式公式。这
 - 任务状态标记为 `CANCELLED`，而非 `SUCCEEDED` 或 `FAILED`。
 - 取消不会导致任何虚假的实验结论。
 
-## 8. 导出报告的科学边界
+## 8. 历史假分数清理（v0.5.1-hotfix）
+
+2026-05-26 执行的清理操作：
+- 备份数据库：`backups/db/ampgen_platform_before_v051_hotfix_YYYYMMDD_HHMMSS.db`
+- 清空 `source='local_demo'` 的所有 `amp_score`、`mic_ecoli`、`mic_saureus`、`toxicity_risk`、`hemolysis_risk`
+- `source='local_real_smoke'` 的记录完全不受影响
+- 清理后 LOCAL_DEMO 分数非空数量 = 0
+
+## 9. 导出报告的科学边界
 
 所有导出的报告（CSV、FASTA、JSON、Markdown）均包含以下声明：
 

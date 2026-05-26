@@ -634,6 +634,7 @@ export default function ReportExport() {
             <div className="flex items-center gap-2">
               <Eye size={16} className="text-[#14B8A6]" />
               <h2 className="text-[16px] font-semibold text-[#111827]">{t('reports.previewTitle') as string}</h2>
+              <span className="text-[10px] text-[#9CA3AF] bg-[#F3F4F6] px-1.5 py-0.5 rounded ml-1">Preview data only</span>
             </div>
             <span className="text-[12px] text-[#6B7280]">{selectedFormatConfig?.name}</span>
           </div>

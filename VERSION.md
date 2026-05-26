@@ -2,11 +2,13 @@
 
 ## Current Release
 
-**v0.5-report-export**
+**v0.5.1-hotfix**
 
-Release Date: 2026-05-25
-Git Tag: `v0.5-report-export`
-Git Commit: (to be sealed)
+Release Date: 2026-05-26
+Git Tag: `v0.5.1-hotfix`
+Git Commit: `35dab21`
+
+Previous: v0.5-report-export (2026-05-25, e3a1fa7)
 
 ## Capability Matrix
 
@@ -32,7 +34,17 @@ Git Commit: (to be sealed)
 | v0.5 | Generation Run JSON / Markdown report | ✅ |
 | v0.5 | List generation runs API | ✅ |
 | v0.5 | Export smoke test script | ✅ |
+| v0.5 | Report Export Center (real API) | ✅ |
+| v0.5 | Candidates CSV / FASTA export | ✅ |
+| v0.5 | Tasks JSON export | ✅ |
+| v0.5 | Generation Run JSON / Markdown report | ✅ |
+| v0.5 | List generation runs API | ✅ |
+| v0.5 | Export smoke test script | ✅ |
 | v0.5 | pytest 36/36 pass | ✅ |
+| v0.5.1 | Remove fake demo amp_score / MIC values | ✅ |
+| v0.5.1 | LOCAL_DEMO scores set to null | ✅ |
+| v0.5.1 | Database cleanup script for historical fake scores | ✅ |
+| v0.5.1 | pytest 40/40 pass | ✅ |
 | — | Git baseline initialized | ✅ |
 | — | One-click start/stop scripts | ✅ |
 | — | Health check + smoke tests | ✅ |

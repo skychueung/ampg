@@ -67,18 +67,13 @@ def run_local_demo_generation(db: Session, run: GenerationRun) -> dict:
         else:
             status = "FILTERED"
 
-        # Demo scores: heuristic formulas only, clearly marked as demo
-        charge = filter_result["net_charge"]
-        hydro = filter_result["hydrophobic_fraction"]
-        charge_factor = min(max((charge + 5) / 10, 0), 1)
-        hydro_factor = min(max(1 - abs(hydro - 0.55) / 0.3, 0), 1)
-        amp_score = round(charge_factor * 0.4 + hydro_factor * 0.3 + random.random() * 0.3, 3)
-        amp_score = min(max(amp_score, 0.05), 0.99)
-
-        mic_ecoli = round(amp_score * (0.7 + random.random() * 0.3), 3) if amp_score > 0.5 else None
-        mic_saureus = round(amp_score * (0.6 + random.random() * 0.3), 3) if amp_score > 0.5 else None
-        toxicity_risk = round(random.random() * (1 - amp_score * 0.5), 3)
-        hemolysis_risk = round(random.random() * (1.1 - amp_score), 3)
+        # AMP score and MIC are not computed for LOCAL_DEMO.
+        # Only physicochemical properties (length, charge, hydrophobicity, valid_aa) are calculated.
+        amp_score = None
+        mic_ecoli = None
+        mic_saureus = None
+        toxicity_risk = None
+        hemolysis_risk = None
 
         peptide = PeptideCandidate(
             sequence=seq,
@@ -87,7 +82,7 @@ def run_local_demo_generation(db: Session, run: GenerationRun) -> dict:
             hydrophobic_fraction=filter_result["hydrophobic_fraction"],
             hydrophobicity=filter_result["hydrophobicity"],
             valid_aa=filter_result["valid_aa"],
-            amp_score=amp_score if status != "REJECTED" else None,
+            amp_score=amp_score,
             mic_ecoli=mic_ecoli,
             mic_saureus=mic_saureus,
             toxicity_risk=toxicity_risk,
@@ -95,7 +90,7 @@ def run_local_demo_generation(db: Session, run: GenerationRun) -> dict:
             status=status,
             source="local_demo",
             generation_run_id=run.id,
-            notes=f"Local demo generation (computational preview). {DISCLAIMER}",
+            notes=f"Local demo sequence only. AMP score and MIC are not computed. {DISCLAIMER}",
         )
         db.add(peptide)
         generated_count += 1

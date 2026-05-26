@@ -114,3 +114,12 @@ npm run dev
 ## 许可证
 
 内部使用。实验数据不得作为临床或商业决策依据。
+
+
+## v0.5.1-hotfix (2026-05-26)
+
+- LOCAL_DEMO no longer writes fake mp_score, mic_ecoli, mic_saureus, 	oxicity_risk, or hemolysis_risk.
+- Historical fake demo scores have been cleared from the SQLite database.
+- All null scores display as **Not computed** in the UI and remain empty in CSV exports.
+- See docs/SCIENTIFIC_BOUNDARY.md for details.
+

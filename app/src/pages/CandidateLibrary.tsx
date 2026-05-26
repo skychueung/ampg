@@ -918,7 +918,7 @@ export default function CandidateLibrary() {
 
                       {/* Source */}
                       <td className="px-3 py-3 text-center text-[12px] text-[#6B7280]">
-                        {peptide.source || '-'}
+                        {peptide.source === 'local_demo' ? 'Demo' : peptide.source === 'local_real_smoke' ? 'Real' : (peptide.source || '-')}
                       </td>
 
                       {/* Notes indicator */}

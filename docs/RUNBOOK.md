@@ -292,3 +292,18 @@ Copy-Item backend\data\ampgen_platform.db "ampgen_db_backup_$(Get-Date -Format y
 | 后端测试 | `cd backend; pytest tests/ -q` |
 | 前端构建 | `cd app; npm run build` |
 | 查看版本 | `git log --oneline -n 1; git tag -l` |
+
+
+## v0.5.1-hotfix 数据库修复
+
+如果历史 LOCAL_DEMO 数据包含假分数，运行一次性修复脚本：
+
+`powershell
+cd backend
+python scripts/fix_demo_fake_scores.py
+``n
+该脚本会：
+1. 自动备份数据库到 ackups/db/。
+2. 清空所有 source='local_demo' 的 mp_score、mic_ecoli、mic_saureus、	oxicity_risk、hemolysis_risk。
+3. 保留 source='local_real_smoke' 的记录不变。
+
