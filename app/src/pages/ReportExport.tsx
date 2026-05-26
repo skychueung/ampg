@@ -17,7 +17,8 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { DEMO_PEPTIDES } from '@/data/demoData'
+import { listPeptides } from '@/api/peptides'
+import type { PeptideCandidate } from '@/api/peptides'
 import { useTranslation } from '@/i18n/LanguageContext'
 import {
   exportCandidatesCsv,
@@ -159,35 +160,42 @@ const cardFadeIn = {
 /*                               Preview Generators                           */
 /* -------------------------------------------------------------------------- */
 
-function generateCsvPreview(): string {
+function generateCsvPreview(peptides: PeptideCandidate[]): string {
   const headers = 'id,sequence,length,net_charge,molecular_weight,hydrophobicity,amp_score,mic_score,toxicity,hemolysis,status,generated_date,disclaimer'
-  const rows = DEMO_PEPTIDES.slice(0, 5).map((p) => {
+  const rows = peptides.slice(0, 5).map((p) => {
     const disclaimer = 'COMPUTATIONAL PREDICTIONS ONLY - NOT EXPERIMENTALLY VALIDATED'
-    return `${p.id},"${p.sequence}",${p.length},${p.netCharge > 0 ? '+' : ''}${p.netCharge},${(p.length * 110 + Math.floor(Math.random() * 500)).toFixed(1)},${p.hydrophobicity},${p.ampScore},${p.micScore},${p.toxicityRisk},${p.hemolysisRisk},${p.status},${format(p.createdAt, 'yyyy-MM-dd')},"${disclaimer}"`
+    const netChargeStr = p.net_charge != null ? (p.net_charge > 0 ? `+${p.net_charge}` : `${p.net_charge}`) : 'N/A'
+    const mw = (p.length * 110 + Math.floor(Math.random() * 500)).toFixed(1)
+    const hydro = p.hydrophobic_fraction != null ? p.hydrophobic_fraction.toFixed(3) : 'N/A'
+    const amp = p.amp_score != null ? p.amp_score.toFixed(3) : 'N/A'
+    const mic = p.mic_ecoli != null ? p.mic_ecoli.toFixed(3) : 'N/A'
+    const created = p.created_at ? format(new Date(p.created_at), 'yyyy-MM-dd') : 'N/A'
+    return `${p.id},"${p.sequence}",${p.length},${netChargeStr},${mw},${hydro},${amp},${mic},N/A,N/A,${p.status || 'N/A'},${created},"${disclaimer}"`
   })
   return [headers, ...rows].join('\n')
 }
 
-function generateFastaPreview(): string {
-  return DEMO_PEPTIDES.slice(0, 5)
+function generateFastaPreview(peptides: PeptideCandidate[]): string {
+  return peptides
+    .slice(0, 5)
     .map(
       (p) =>
-        `>peptide_${p.id} | AMP=${p.ampScore.toFixed(3)} | MIC=${p.micScore.toFixed(3)} | Status=${p.status}\n${p.sequence}`
+        `>peptide_${p.id} | AMP=${p.amp_score != null ? p.amp_score.toFixed(3) : 'N/A'} | MIC=${p.mic_ecoli != null ? p.mic_ecoli.toFixed(3) : 'N/A'} | Status=${p.status || 'N/A'}\n${p.sequence}`
     )
     .join('\n\n')
 }
 
-function generateJsonPreview(): string {
-  const peptides = DEMO_PEPTIDES.slice(0, 5).map((p) => ({
+function generateJsonPreview(peptides: PeptideCandidate[]): string {
+  const mapped = peptides.slice(0, 5).map((p) => ({
     id: p.id,
     sequence: p.sequence,
     length: p.length,
-    net_charge: p.netCharge,
-    hydrophobicity: p.hydrophobicity,
-    amp_score: p.ampScore,
-    mic_score: p.micScore,
-    toxicity_risk: p.toxicityRisk,
-    hemolysis_risk: p.hemolysisRisk,
+    net_charge: p.net_charge,
+    hydrophobicity: p.hydrophobic_fraction,
+    amp_score: p.amp_score ?? 'N/A',
+    mic_score: p.mic_ecoli ?? 'N/A',
+    toxicity_risk: 'N/A',
+    hemolysis_risk: 'N/A',
     status: p.status,
   }))
   return JSON.stringify(
@@ -195,41 +203,41 @@ function generateJsonPreview(): string {
       report_title: 'AMPGen Analysis Report',
       generated_at: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
       disclaimer: 'COMPUTATIONAL PREDICTIONS ONLY - NOT EXPERIMENTALLY VALIDATED',
-      peptide_count: 312,
-      peptides,
+      peptide_count: peptides.length,
+      peptides: mapped,
     },
     null,
     2
   )
 }
 
-function generateXlsxPreview(): string {
+function generateXlsxPreview(peptides: PeptideCandidate[]): string {
   return [
     'Synthesis Order Template',
     'Generated: ' + format(new Date(), 'yyyy-MM-dd HH:mm'),
     '',
     'Sequence,Length,Scale,Purity,Modifications,Notes',
-    ...DEMO_PEPTIDES.slice(0, 5).map(
+    ...peptides.slice(0, 5).map(
       (p) =>
-        `${p.sequence},${p.length},1mg,>95%,Amidation,AMP=${p.ampScore.toFixed(3)} MIC=${p.micScore.toFixed(3)}`
+        `${p.sequence},${p.length},1mg,>95%,Amidation,AMP=${p.amp_score != null ? p.amp_score.toFixed(3) : 'N/A'} MIC=${p.mic_ecoli != null ? p.mic_ecoli.toFixed(3) : 'N/A'}`
     ),
     '',
     'DISCLAIMER: All data is computational prediction only. Experimental validation required.',
   ].join('\n')
 }
 
-function generatePdfPreview(): string {
+function generatePdfPreview(peptides: PeptideCandidate[]): string {
   return [
     'AMPGen Screening Report',
     '='.repeat(50),
     `Generated: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`,
-    `Total Candidates: 312`,
+    `Total Candidates: ${peptides.length}`,
     ``,
     'Top 5 Candidates by AMP Score:',
     '-'.repeat(50),
-    ...DEMO_PEPTIDES.slice(0, 5).map(
+    ...peptides.slice(0, 5).map(
       (p, i) =>
-        `${i + 1}. ${p.sequence} (len=${p.length}) AMP=${p.ampScore.toFixed(3)} MIC=${p.micScore.toFixed(3)} Toxicity=${p.toxicityRisk.toFixed(3)}`
+        `${i + 1}. ${p.sequence} (len=${p.length}) AMP=${p.amp_score != null ? p.amp_score.toFixed(3) : 'N/A'} MIC=${p.mic_ecoli != null ? p.mic_ecoli.toFixed(3) : 'N/A'} Toxicity=N/A`
     ),
     '',
     'DISCLAIMER: All predictions are computational and NOT experimentally validated.',
@@ -237,20 +245,20 @@ function generatePdfPreview(): string {
   ].join('\n')
 }
 
-function getPreviewForFormat(formatId: string): string {
+function getPreviewForFormat(formatId: string, peptides: PeptideCandidate[]): string {
   switch (formatId) {
     case 'csv':
-      return generateCsvPreview()
+      return generateCsvPreview(peptides)
     case 'fasta':
-      return generateFastaPreview()
+      return generateFastaPreview(peptides)
     case 'json':
-      return generateJsonPreview()
+      return generateJsonPreview(peptides)
     case 'xlsx':
-      return generateXlsxPreview()
+      return generateXlsxPreview(peptides)
     case 'pdf':
-      return generatePdfPreview()
+      return generatePdfPreview(peptides)
     default:
-      return generateCsvPreview()
+      return generateCsvPreview(peptides)
   }
 }
 
@@ -288,15 +296,26 @@ export default function ReportExport() {
   const [selectedRunId, setSelectedRunId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [previewPeptides, setPreviewPeptides] = useState<PeptideCandidate[]>([])
 
   /* -- Preview content -- */
-  const previewContent = useMemo(() => getPreviewForFormat(selectedFormat), [selectedFormat])
+  const previewContent = useMemo(() => getPreviewForFormat(selectedFormat, previewPeptides), [selectedFormat, previewPeptides])
   const previewStats = useMemo(() => getPreviewStats(selectedFormat), [selectedFormat])
 
   /* -- Disclaimer pulse animation (2 iterations) -- */
   useEffect(() => {
     const t1 = setTimeout(() => setDisclaimerPulse(false), 4000)
     return () => clearTimeout(t1)
+  }, [])
+
+  /* -- Load preview peptides -- */
+  useEffect(() => {
+    listPeptides()
+      .then((data) => setPreviewPeptides(data))
+      .catch((err) => {
+        console.error('Failed to load preview peptides:', err)
+        setPreviewPeptides([])
+      })
   }, [])
 
   /* -- Load generation runs -- */
@@ -634,7 +653,7 @@ export default function ReportExport() {
             <div className="flex items-center gap-2">
               <Eye size={16} className="text-[#14B8A6]" />
               <h2 className="text-[16px] font-semibold text-[#111827]">{t('reports.previewTitle') as string}</h2>
-              <span className="text-[10px] text-[#9CA3AF] bg-[#F3F4F6] px-1.5 py-0.5 rounded ml-1">Preview data only</span>
+              <span className="text-[10px] text-[#9CA3AF] bg-[#F3F4F6] px-1.5 py-0.5 rounded ml-1">Live database preview</span>
             </div>
             <span className="text-[12px] text-[#6B7280]">{selectedFormatConfig?.name}</span>
           </div>

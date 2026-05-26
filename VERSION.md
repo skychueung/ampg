@@ -2,13 +2,13 @@
 
 ## Current Release
 
-**v0.5.1-hotfix**
+**v0.5.2-dashboard-report-preview-fix**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.1-hotfix`
-Git Commit: `35dab21`
+Git Tag: `v0.5.2-dashboard-report-preview-fix`
+Git Commit: `76550e2`
 
-Previous: v0.5-report-export (2026-05-25, e3a1fa7)
+Previous: v0.5.1-hotfix (2026-05-26, cf5423b)
 
 ## Capability Matrix
 

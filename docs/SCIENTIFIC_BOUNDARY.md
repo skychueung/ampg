@@ -108,3 +108,13 @@ v0.5.1-hotfix 已彻底移除这些假值：
 ## 9. 审查机制
 
 所有版本发布前必须经过 **ARIS-Lite 四角色审查**（详见 [ARIS_LITE_REVIEW_PROTOCOL.md](./ARIS_LITE_REVIEW_PROTOCOL.md)），其中 **Scientific Boundary Reviewer** 负责确保以上规则得到遵守。
+
+
+## 10. Demo 数据仅保留为开发参考（v0.5.2）
+
+2026-05-26 更新：
+- Dashboard、ReportExport 预览、PeptideDetail 已全面切换真实 API。
+- demoData.ts 不再作为任何主流程的数据来源。
+- 所有展示的 mp_score、MIC 均为真实数据库值（LOCAL_DEMO 为 null）。
+- 用户看到的序列、状态、来源均来自真实 SQLite 数据库。
+

@@ -307,3 +307,16 @@ python scripts/fix_demo_fake_scores.py
 2. 清空所有 source='local_demo' 的 mp_score、mic_ecoli、mic_saureus、	oxicity_risk、hemolysis_risk。
 3. 保留 source='local_real_smoke' 的记录不变。
 
+
+
+## Dashboard API 检查
+
+`powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/dashboard/summary' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/dashboard/recent-runs?limit=5' -Method GET
+``n
+## Peptide Detail API 检查
+
+`powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/peptides/1' -Method GET
+``n

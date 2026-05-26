@@ -22,14 +22,27 @@ import {
 import StatCard from '@/components/StatCard'
 import WorkflowDiagram from '@/components/WorkflowDiagram'
 import StatusBadge from '@/components/StatusBadge'
-import {
-  DEMO_PEPTIDES,
-  countByStatus,
-  formatRelativeTime,
-  getRecentTasks,
-  createTask,
-} from '@/data/demoData'
-import type { PeptideCandidate } from '@/data/demoData'
+import type { TaskStatus } from '@/components/StatusBadge'
+import { getDashboardSummary, getRecentRuns } from '@/api/dashboard'
+import type { DashboardSummary, RecentRun } from '@/api/dashboard'
+import { listPeptides } from '@/api/peptides'
+import type { PeptideCandidate } from '@/api/peptides'
+
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  if (diffSec < 60) return 'just now'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.floor(diffHr / 24)
+  if (diffDay < 30) return `${diffDay}d ago`
+  return date.toLocaleDateString()
+}
 
 const staggerContainer = {
   animate: { transition: { staggerChildren: 0.08 } },
@@ -45,16 +58,51 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationStatus, setGenerationStatus] = useState('')
   const [showDisclaimer, setShowDisclaimer] = useState(true)
-  const [recentTasks, setRecentTasks] = useState(getRecentTasks(5))
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([])
+  const [recentPeptides, setRecentPeptides] = useState<PeptideCandidate[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const stats = countByStatus()
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <p className="text-[14px] text-[#6B7280]">Loading dashboard...</p>
+      </div>
+    )
+  }
 
-  // Refresh tasks periodically for demo
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <p className="text-[14px] text-[#EF4444] mb-2">{error}</p>
+          <p className="text-[12px] text-[#6B7280]">Please run scripts/start_backend.ps1</p>
+        </div>
+      </div>
+    )
+  }
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRecentTasks(getRecentTasks(5))
-    }, 5000)
-    return () => clearInterval(interval)
+    async function fetchData() {
+      try {
+        setLoading(true)
+        const [sum, runs, peptides] = await Promise.all([
+          getDashboardSummary(),
+          getRecentRuns(5),
+          listPeptides(),
+        ])
+        setSummary(sum)
+        setRecentRuns(runs)
+        setRecentPeptides(peptides.slice(0, 6))
+        setError(null)
+      } catch (err) {
+        setError('Backend unavailable. Please run scripts/start_backend.ps1')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
   }, [])
 
   const handleGenerate = () => {
@@ -69,16 +117,12 @@ export default function Dashboard() {
       setGenerationStatus(`Generating ${peptideCount} peptides (length ${peptideLength})...`)
     }, 1200)
     setTimeout(() => {
-      const task = createTask(
-        generationMode === 'Generate' ? 'AMP Generation' : 'AMP Refinement',
-        peptideCount
-      )
-      setGenerationStatus(`Task #${task.id} started successfully!`)
-      setRecentTasks(getRecentTasks(5))
+      setGenerationStatus('Redirecting to generation page...')
     }, 2500)
     setTimeout(() => {
       setIsGenerating(false)
       setGenerationStatus('')
+      navigate('/generation')
     }, 3500)
   }
 
@@ -110,6 +154,18 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-50 border border-red-200 rounded-[8px] p-4 flex items-center gap-3"
+        >
+          <AlertTriangle size={18} className="text-red-500 flex-shrink-0" />
+          <p className="text-[13px] text-red-700">{error}</p>
+        </motion.div>
+      )}
+
       {/* Page Header */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <h1 className="text-[20px] font-semibold text-[#111827]">{t('dashboard.title') as string}</h1>
@@ -127,28 +183,28 @@ export default function Dashboard() {
       >
         <StatCard
           icon={<Database size={18} />}
-          value={stats.GENERATED}
+          value={summary?.peptides_total ?? 0}
           label={t('dashboard.statGenerated') as string}
           color="teal"
           delay={0}
         />
         <StatCard
           icon={<CheckCircle size={18} />}
-          value={stats.FILTERED}
+          value={summary?.peptides_filtered ?? 0}
           label={t('dashboard.statPassed') as string}
           color="green"
           delay={80}
         />
         <StatCard
           icon={<Beaker size={18} />}
-          value={stats.CANDIDATE}
+          value={summary?.peptides_candidate ?? 0}
           label={t('dashboard.statCandidates') as string}
           color="teal"
           delay={160}
         />
         <StatCard
           icon={<Clock size={18} />}
-          value={stats.VALIDATED}
+          value={summary?.peptides_rejected ?? 0}
           label={t('dashboard.statPending') as string}
           color="amber"
           delay={240}
@@ -351,44 +407,44 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentTasks.map((task, index) => (
+              {recentRuns.map((run, index) => (
                 <motion.tr
-                  key={task.id}
+                  key={run.run_id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.25, delay: 0.04 * index }}
                   className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors h-[48px]"
                 >
                   <td className="px-4 py-3 font-mono text-[14px] text-[#14B8A6]">
-                    #{task.id}
+                    #{run.run_id}
                   </td>
-                  <td className="px-4 py-3 text-[14px] text-[#111827]">{task.type === 'AMP Generation' ? t('tasks.typeGeneration') : task.type === 'Physicochemical Filter' ? t('tasks.typeFiltering') : task.type === 'AMP Discriminator' ? t('tasks.typeDiscriminator') : task.type === 'MIC Scoring' ? t('tasks.typeScoring') : task.type as string}</td>
+                  <td className="px-4 py-3 text-[14px] text-[#111827]">{run.backend}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={task.status} />
+                    <StatusBadge status={run.status as TaskStatus} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-[80px] h-[6px] bg-[#E5E7EB] rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
-                            task.status === 'SUCCEEDED'
+                            run.status === 'SUCCEEDED'
                               ? 'bg-[#10B981]'
-                              : task.status === 'FAILED'
+                              : run.status === 'FAILED'
                                 ? 'bg-[#EF4444]'
-                                : task.status === 'RUNNING'
+                                : run.status === 'RUNNING'
                                   ? 'bg-[#F59E0B]'
                                   : 'bg-[#6B7280]'
                           }`}
-                          style={{ width: `${(task.progress / task.total) * 100}%` }}
+                          style={{ width: `${(run.count / run.count) * 100}%` }}
                         />
                       </div>
                       <span className="text-[12px] text-[#6B7280]">
-                        {task.progress}/{task.total}
+                        {run.count}/{run.count}
                       </span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-[13px] text-[#6B7280]">
-                    {formatRelativeTime(task.createdAt)}
+                    {formatRelativeTime(run.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -486,7 +542,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {DEMO_PEPTIDES.slice(0, 6).map((peptide: PeptideCandidate, index: number) => (
+              {recentPeptides.map((peptide: PeptideCandidate, index: number) => (
                 <motion.tr
                   key={peptide.id}
                   initial={{ opacity: 0, x: -10 }}
@@ -499,32 +555,46 @@ export default function Dashboard() {
                   <td className="px-4 py-3 font-mono text-[14px] text-[#14B8A6]">{peptide.sequence}</td>
                   <td className="px-4 py-3 text-[14px] text-[#111827]">{peptide.length}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`text-[13px] font-medium ${
-                        peptide.ampScore > 0.7 ? 'text-[#10B981]' : peptide.ampScore > 0.4 ? 'text-[#F59E0B]' : 'text-[#EF4444]'
-                      }`}
-                    >
-                      {peptide.ampScore.toFixed(3)}
-                    </span>
+                    {peptide.amp_score != null ? (
+                      <span
+                        className={`text-[13px] font-medium ${
+                          peptide.amp_score > 0.7 ? 'text-[#10B981]' : peptide.amp_score > 0.4 ? 'text-[#F59E0B]' : 'text-[#EF4444]'
+                        }`}
+                      >
+                        {peptide.amp_score.toFixed(3)}
+                      </span>
+                    ) : (
+                      <span className="text-[13px] text-[#9CA3AF]">Not computed</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-[#6B7280]">{peptide.micScore.toFixed(3)}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`text-[13px] font-medium ${
-                        peptide.toxicityRisk < 0.3 ? 'text-[#10B981]' : peptide.toxicityRisk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]'
-                      }`}
-                    >
-                      {peptide.toxicityRisk.toFixed(3)}
-                    </span>
+                  <td className="px-4 py-3 text-[13px] text-[#6B7280]">
+                    {peptide.mic_ecoli != null ? peptide.mic_ecoli.toFixed(3) : <span className="text-[#9CA3AF]">Not computed</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`text-[13px] font-medium ${
-                        peptide.hemolysisRisk < 0.3 ? 'text-[#10B981]' : peptide.hemolysisRisk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]'
-                      }`}
-                    >
-                      {peptide.hemolysisRisk.toFixed(3)}
-                    </span>
+                    {peptide.toxicity_risk != null ? (
+                      <span
+                        className={`text-[13px] font-medium ${
+                          peptide.toxicity_risk < 0.3 ? 'text-[#10B981]' : peptide.toxicity_risk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]'
+                        }`}
+                      >
+                        {peptide.toxicity_risk.toFixed(3)}
+                      </span>
+                    ) : (
+                      <span className="text-[13px] text-[#9CA3AF]">Not computed</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {peptide.hemolysis_risk != null ? (
+                      <span
+                        className={`text-[13px] font-medium ${
+                          peptide.hemolysis_risk < 0.3 ? 'text-[#10B981]' : peptide.hemolysis_risk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]'
+                        }`}
+                      >
+                        {peptide.hemolysis_risk.toFixed(3)}
+                      </span>
+                    ) : (
+                      <span className="text-[13px] text-[#9CA3AF]">Not computed</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span

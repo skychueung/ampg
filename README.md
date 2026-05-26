@@ -123,3 +123,14 @@ npm run dev
 - All null scores display as **Not computed** in the UI and remain empty in CSV exports.
 - See docs/SCIENTIFIC_BOUNDARY.md for details.
 
+
+## v0.5.2-dashboard-report-preview-fix (2026-05-26)
+
+- Dashboard now uses real GET /api/v1/dashboard/summary and GET /api/v1/dashboard/recent-runs APIs.
+- ReportExport preview now uses real GET /api/v1/peptides API instead of DEMO_PEPTIDES.
+- PeptideDetail now uses real GET /api/v1/peptides/{id} API instead of demoData.
+- Removed all main-flow demoData dependencies from Dashboard, ReportExport, and PeptideDetail.
+- Added ackend/app/routers/dashboard.py with summary and recent-runs endpoints.
+- Added pp/src/api/dashboard.ts client.
+- pytest 46/46 pass.
+

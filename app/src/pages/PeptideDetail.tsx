@@ -24,7 +24,8 @@ import {
   Check,
   Beaker,
 } from 'lucide-react'
-import { getPeptideById,  } from '@/data/demoData'
+import { getPeptide } from '@/api/peptides'
+import type { PeptideCandidate } from '@/api/peptides'
 import { useTranslation } from '@/i18n/LanguageContext'
 
 /* ------------------------------------------------------------------ */
@@ -215,7 +216,27 @@ export default function PeptideDetail() {
   const peptideId = Number(id)
   const { t } = useTranslation()
 
-  const peptide = getPeptideById(peptideId)
+  const [peptide, setPeptide] = useState<PeptideCandidate | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    setError(null)
+    getPeptide(peptideId)
+      .then((data) => {
+        setPeptide(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        if (err?.response?.status === 404 || err?.status === 404 || String(err).includes('404')) {
+          setError('Peptide not found')
+        } else {
+          setError('Backend unavailable')
+        }
+        setLoading(false)
+      })
+  }, [peptideId])
 
   /* ── Notes state ── */
   const [userNotes, setUserNotes] = useState<NoteEntry[]>([
@@ -258,6 +279,40 @@ export default function PeptideDetail() {
   const aliphaticIdx = useMemo(() => (peptide ? calcAliphaticIndex(peptide.sequence) : 0), [peptide])
   const secondaryStruct = useMemo(() => (peptide ? getSecondaryStructure(peptide.sequence) : ''), [peptide])
 
+  /* ── Loading ── */
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#14B8A6] mb-4" />
+        <p className="text-[14px] text-[#6B7280]">Loading peptide...</p>
+      </div>
+    )
+  }
+
+  /* ── Error ── */
+  if (error) {
+    const isNotFound = error === 'Peptide not found'
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh]">
+        <Beaker size={48} className="text-[#D1D5DB] mb-4" />
+        <h2 className="text-[18px] font-semibold text-[#111827] mb-2">
+          {isNotFound ? (t('detail.notFound') as string) : 'Backend unavailable'}
+        </h2>
+        <p className="text-[14px] text-[#6B7280] mb-4">
+          {isNotFound
+            ? `${t('detail.notFoundDesc') as string} #${id}`
+            : 'Backend unavailable. Please run scripts/start_backend.ps1'}
+        </p>
+        <button
+          onClick={() => navigate('/candidate-library')}
+          className="h-[36px] px-4 rounded-[6px] text-[13px] font-medium bg-[#14B8A6] text-white hover:bg-[#0D9488] transition-colors"
+        >
+          {t('detail.backToLibrary') as string}
+        </button>
+      </div>
+    )
+  }
+
   /* ── Not found ── */
   if (!peptide) {
     return (
@@ -276,6 +331,14 @@ export default function PeptideDetail() {
       </div>
     )
   }
+
+  /* ── Safe value extraction ── */
+  const ampScore = peptide.amp_score ?? null
+  const micScore = peptide.mic_ecoli ?? null
+  const toxRisk = peptide.toxicity_risk ?? null
+  const hemoRisk = peptide.hemolysis_risk ?? null
+  const netCharge = peptide.net_charge ?? null
+  const hydrophobicity = peptide.hydrophobicity ?? null
 
   /* ── Handlers ── */
   const copySequence = async () => {
@@ -296,7 +359,7 @@ export default function PeptideDetail() {
   }
 
   const exportFASTA = () => {
-    const fasta = `>AMP_${String(peptide.id).padStart(3, '0')}|score=${peptide.ampScore.toFixed(3)}|mic=${peptide.micScore.toFixed(3)}|status=${peptide.status}\n${peptide.sequence}`
+    const fasta = `>AMP_${String(peptide.id).padStart(3, '0')}|score=${ampScore !== null ? ampScore.toFixed(3) : 'N/A'}|mic=${micScore !== null ? micScore.toFixed(3) : 'N/A'}|status=${peptide.status}\n${peptide.sequence}`
     const blob = new Blob([fasta], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -318,8 +381,8 @@ export default function PeptideDetail() {
     setNewNoteText('')
   }
 
-  const toxBadge = getRiskBadge(peptide.toxicityRisk)
-  const hemoBadge = getRiskBadge(peptide.hemolysisRisk)
+  const toxBadge = toxRisk !== null ? getRiskBadge(toxRisk) : { labelKey: '', fallback: 'Not computed', className: 'bg-gray-50 text-[#6B7280] border-[#6B7280]' }
+  const hemoBadge = hemoRisk !== null ? getRiskBadge(hemoRisk) : { labelKey: '', fallback: 'Not computed', className: 'bg-gray-50 text-[#6B7280] border-[#6B7280]' }
   const statusClasses = getStatusBadgeClasses(peptide.status)
 
   /* ── Position numbers for sequence ── */
@@ -376,7 +439,7 @@ export default function PeptideDetail() {
             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium border ${statusClasses}`}>
               {peptide.status}
             </span>
-            {peptide.ampScore > 0.8 && (
+            {ampScore !== null && ampScore > 0.8 && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-[#10B981] border border-[#10B981]">
                 {t('detail.synthesisReady') as string}
               </span>
@@ -466,9 +529,9 @@ export default function PeptideDetail() {
               { label: t('detail.propMolecularWeight') as string, value: `${mw.toFixed(1)} Da` },
               {
                 label: 'Net Charge (pH 7)',
-                value: `${peptide.netCharge > 0 ? '+' : ''}${peptide.netCharge.toFixed(1)}`,
-                note: peptide.netCharge > 0 ? t('detail.positiveTypicalForAMPs') as string : '',
-                valueColor: peptide.netCharge > 0 ? 'text-[#10B981]' : 'text-[#3B82F6]',
+                value: netCharge !== null ? `${netCharge > 0 ? '+' : ''}${netCharge.toFixed(1)}` : 'Not computed',
+                note: netCharge !== null && netCharge > 0 ? t('detail.positiveTypicalForAMPs') as string : '',
+                valueColor: netCharge !== null ? (netCharge > 0 ? 'text-[#10B981]' : 'text-[#3B82F6]') : 'text-[#6B7280]',
               },
               {
                 label: 'Isoelectric Point (pI)',
@@ -476,13 +539,15 @@ export default function PeptideDetail() {
               },
               {
                 label: 'Hydrophobicity',
-                value: peptide.hydrophobicity.toFixed(3),
+                value: hydrophobicity !== null ? hydrophobicity.toFixed(3) : 'Not computed',
                 note:
-                  peptide.hydrophobicity > 0.5
-                    ? t('detail.high') as string
-                    : peptide.hydrophobicity > 0.2
-                      ? t('detail.moderate') as string
-                      : t('detail.low') as string,
+                  hydrophobicity !== null
+                    ? (hydrophobicity > 0.5
+                      ? t('detail.high') as string
+                      : hydrophobicity > 0.2
+                        ? t('detail.moderate') as string
+                        : t('detail.low') as string)
+                    : '',
               },
               {
                 label: 'Hydrophobic Moment',
@@ -545,13 +610,13 @@ export default function PeptideDetail() {
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[13px] font-medium text-[#111827]">{t('detail.predAMPScore') as string}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-[#111827]">{peptide.ampScore.toFixed(3)}</span>
+                  <span className="text-[16px] font-bold text-[#111827]">{ampScore !== null ? ampScore.toFixed(3) : 'Not computed'}</span>
                   <span className="text-[11px] text-[#10B981]">
-                    {peptide.ampScore > 0.7 ? t('detail.highAntimicrobialProbability') as string : peptide.ampScore > 0.4 ? t('detail.moderateProbability') as string : t('detail.lowProbability') as string}
+                    {ampScore !== null ? (ampScore > 0.7 ? t('detail.highAntimicrobialProbability') as string : ampScore > 0.4 ? t('detail.moderateProbability') as string : t('detail.lowProbability') as string) : ''}
                   </span>
                 </div>
               </div>
-              <AnimatedProgressBar value={peptide.ampScore} delay={100} />
+              <AnimatedProgressBar value={ampScore ?? 0} delay={100} />
             </div>
 
             {/* MIC Score */}
@@ -559,11 +624,11 @@ export default function PeptideDetail() {
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[13px] font-medium text-[#111827]">{t('detail.predMICScore') as string}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-[#111827]">{peptide.micScore.toFixed(3)}</span>
+                  <span className="text-[16px] font-bold text-[#111827]">{micScore !== null ? micScore.toFixed(3) : 'Not computed'}</span>
                   <span className="text-[11px] text-[#F59E0B]">{t('common.demoScoresDisclaimer') as string}</span>
                 </div>
               </div>
-              <AnimatedProgressBar value={peptide.micScore} delay={200} />
+              <AnimatedProgressBar value={micScore ?? 0} delay={200} />
             </div>
 
             {/* Toxicity */}
@@ -571,15 +636,15 @@ export default function PeptideDetail() {
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[13px] font-medium text-[#111827]">{t('detail.predToxicity') as string}</span>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[16px] font-bold ${peptide.toxicityRisk < 0.3 ? 'text-[#10B981]' : peptide.toxicityRisk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
-                    {peptide.toxicityRisk.toFixed(3)}
+                  <span className={`text-[16px] font-bold ${toxRisk !== null ? (toxRisk < 0.3 ? 'text-[#10B981]' : toxRisk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]') : 'text-[#6B7280]'}`}>
+                    {toxRisk !== null ? toxRisk.toFixed(3) : 'Not computed'}
                   </span>
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border ${toxBadge.className}`}>
                     {t(toxBadge.labelKey) as string || toxBadge.fallback}
                   </span>
                 </div>
               </div>
-              <AnimatedProgressBar value={peptide.toxicityRisk} delay={300} />
+              <AnimatedProgressBar value={toxRisk ?? 0} delay={300} />
             </div>
 
             {/* Hemolysis */}
@@ -587,24 +652,24 @@ export default function PeptideDetail() {
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[13px] font-medium text-[#111827]">{t('detail.predHemolysis') as string}</span>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[16px] font-bold ${peptide.hemolysisRisk < 0.3 ? 'text-[#10B981]' : peptide.hemolysisRisk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
-                    {peptide.hemolysisRisk.toFixed(3)}
+                  <span className={`text-[16px] font-bold ${hemoRisk !== null ? (hemoRisk < 0.3 ? 'text-[#10B981]' : hemoRisk < 0.6 ? 'text-[#F59E0B]' : 'text-[#EF4444]') : 'text-[#6B7280]'}`}>
+                    {hemoRisk !== null ? hemoRisk.toFixed(3) : 'Not computed'}
                   </span>
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border ${hemoBadge.className}`}>
                     {t(hemoBadge.labelKey) as string || hemoBadge.fallback}
                   </span>
                 </div>
               </div>
-              <AnimatedProgressBar value={peptide.hemolysisRisk} delay={400} />
+              <AnimatedProgressBar value={hemoRisk ?? 0} delay={400} />
             </div>
 
             {/* Stability (derived from ampScore) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[13px] font-medium text-[#111827]">{t('detail.predStability') as string}</span>
-                <span className="text-[16px] font-bold text-[#111827]">{Math.min(peptide.ampScore * 1.1, 0.99).toFixed(3)}</span>
+                <span className="text-[16px] font-bold text-[#111827]">{ampScore !== null ? Math.min(ampScore * 1.1, 0.99).toFixed(3) : 'Not computed'}</span>
               </div>
-              <AnimatedProgressBar value={Math.min(peptide.ampScore * 1.1, 0.99)} delay={500} />
+              <AnimatedProgressBar value={ampScore !== null ? Math.min(ampScore * 1.1, 0.99) : 0} delay={500} />
             </div>
           </div>
 
@@ -710,7 +775,7 @@ export default function PeptideDetail() {
               { label: t('detail.structurePredictor') as string, value: 'AlphaFold2-lite (placeholder)' },
               {
                 label: 'Generation Date',
-                value: peptide.createdAt.toLocaleString('en-US', {
+                value: new Date(peptide.created_at).toLocaleString('en-US', {
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric',
@@ -730,7 +795,7 @@ export default function PeptideDetail() {
                 badge: true,
                 badgeClass: 'bg-[#F0FDFA] text-[#14B8A6] border-[#14B8A6]',
               },
-              { label: t('detail.confidence') as string, value: peptide.ampScore > 0.8 ? t('detail.high') as string : peptide.ampScore > 0.5 ? t('detail.medium') as string : t('detail.low') as string },
+              { label: t('detail.confidence') as string, value: ampScore !== null ? (ampScore > 0.8 ? t('detail.high') as string : ampScore > 0.5 ? t('detail.medium') as string : t('detail.low') as string) : 'Not computed' },
             ].map((row, i) => (
               <div
                 key={i}
@@ -840,7 +905,7 @@ export default function PeptideDetail() {
             <div className="bg-[#F9FAFB] rounded-[6px] px-3 py-2.5">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[12px] font-semibold text-[#6B7280]">{t('common.system') as string}</span>
-                <span className="text-[11px] text-[#9CA3AF]">{peptide.createdAt.toLocaleDateString()}</span>
+                <span className="text-[11px] text-[#9CA3AF]">{new Date(peptide.created_at).toLocaleDateString()}</span>
               </div>
               <p className="text-[13px] text-[#111827]">{peptide.notes}</p>
             </div>

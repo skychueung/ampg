@@ -296,3 +296,22 @@ Header format: `>peptide_{id}|status={status}|source={source}|length={length}|ch
 2. **All `amp_score`, `mic_*` fields may be `null`** for LOCAL_REAL_SMOKE.
 3. **POST /generation-runs is non-blocking** — returns immediately with `PENDING`.
 4. **Poll `GET /generation-runs/{id}` or `GET /generation-runs/{id}/peptides`** to track completion.
+
+
+## Dashboard API (v0.5.2)
+
+### GET /api/v1/dashboard/summary
+
+Returns real database statistics.
+
+### GET /api/v1/dashboard/recent-runs?limit=5
+
+Returns recent generation runs with peptide counts.
+
+## Peptide Detail API (confirmed v0.5.2)
+
+### GET /api/v1/peptides/{peptide_id}
+
+Returns full peptide details including null scores.
+
+
