@@ -77,3 +77,8 @@ tmp/
 temp/
 uploads/
 outputs/
+
+# ── Local backups / patches (WIP diffs) ──
+backups/
+*.patch
+*.diff

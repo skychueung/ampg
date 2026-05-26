@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Activity,
@@ -24,6 +25,7 @@ import {
   ChevronUp,
   Microscope,
   Beaker,
+  ExternalLink,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -53,6 +55,7 @@ interface ExtendedTask {
   artifactDir?: string
   duration?: number
   logs?: string[]
+  relatedGenerationRunId?: number | null
 }
 
 /* -------------------------------------------------------------------------- */
@@ -119,6 +122,7 @@ function adaptApiTask(task: ApiTaskRecord): ExtendedTask {
     message: task.message,
     artifactDir: task.artifact_dir,
     duration,
+    relatedGenerationRunId: task.related_generation_run_id,
   }
 }
 
@@ -210,6 +214,7 @@ function TaskTypeBadge({ type }: { type: string }) {
 /* -------------------------------------------------------------------------- */
 
 export default function TaskCenter() {
+  const navigate = useNavigate()
   const { t } = useTranslation()
   const [tasks, setTasks] = useState<ExtendedTask[]>([])
   const [loading, setLoading] = useState(false)
@@ -623,6 +628,16 @@ export default function TaskCenter() {
                       >
                         <Eye size={14} />
                       </button>
+                      {/* View Run Detail for generation tasks */}
+                      {task.type === 'AMP Generation' && task.relatedGenerationRunId && (
+                        <button
+                          onClick={() => navigate(`/generation-runs/${task.relatedGenerationRunId}`)}
+                          className="p-1.5 rounded-[6px] hover:bg-[#F0FDFA] text-[#6B7280] hover:text-[#14B8A6] transition-colors"
+                          title="View Run Detail"
+                        >
+                          <ExternalLink size={14} />
+                        </button>
+                      )}
                       {task.status === 'FAILED' && (
                         <button
                           onClick={() => retryTask(task.id)}

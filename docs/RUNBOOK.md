@@ -335,3 +335,53 @@ npm run build
 # 检查 dist/assets/ 下的 chunk 分布
 Get-ChildItem dist/assets -Filter *.js | Select-Object Name, @{N='SizeKB';E={[math]::Round(.Length/1KB,1)}}
 ``n
+
+## Artifacts API 检查 (v0.5.4)
+
+```powershell
+# 获取 artifacts
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/generation-runs/1/artifacts' -Method GET
+
+# 预期 LOCAL_DEMO：
+# { artifact_dir: null, files: [], message: "No artifacts directory configured..." }
+
+# 预期 LOCAL_REAL_SMOKE（成功后）：
+# { artifact_dir: "...", files: [{name:"stdout.log",...}, ...], message: "Found N files." }
+```
+
+## Workflow 页面检查 (v0.5.4)
+
+```powershell
+# 打开前端后访问
+Start-Process "http://localhost:3000/#/ampgen-workflow"
+
+# 确认显示：
+# - 三档运行模式卡片
+# - 9 步工作流流程
+# - 系统状态区（backend online, AMPGen components, DB stats）
+```
+
+## Run Detail 页面检查 (v0.5.4)
+
+```powershell
+# 从前端 Generation 页面创建 run 后点击 "View Run Detail"
+# 或直接访问
+Start-Process "http://localhost:3000/#/generation-runs/1"
+
+# 确认显示：
+# - Run Summary 卡片
+# - Visual Timeline
+# - Task Status 卡片
+# - Logs 区域（可折叠）
+# - Artifacts 区域
+# - Generated Peptides 表格
+# - 快捷按钮（Back to Generation, Candidate Library, Task Center, Copy FASTA）
+```
+
+## Cross-page 导航检查 (v0.5.4)
+
+| 起始页面 | 操作 | 目标页面 |
+|---------|------|---------|
+| Generation | "View Run Detail" | `/generation-runs/:id` |
+| TaskCenter | 外部链接图标 (AMP Generation 任务) | `/generation-runs/:id` |
+| CandidateLibrary | "View Source Run" | `/generation-runs/:id` |

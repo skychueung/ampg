@@ -41,3 +41,21 @@ export function getGenerationRun(runId: number): Promise<GenerationRun> {
 export function getGenerationRunPeptides(runId: number): Promise<GenerationRun & { peptides: PeptideCandidate[]; disclaimer: string }> {
   return apiClient.get(`/v1/generation-runs/${runId}/peptides`)
 }
+
+export interface ArtifactFile {
+  name: string
+  exists: boolean
+  size_kb: number
+  modified_at: string
+  type: string
+}
+
+export interface GenerationRunArtifacts {
+  artifact_dir: string | null
+  files: ArtifactFile[]
+  message: string
+}
+
+export function getGenerationRunArtifacts(runId: number): Promise<GenerationRunArtifacts> {
+  return apiClient.get(`/v1/generation-runs/${runId}/artifacts`)
+}

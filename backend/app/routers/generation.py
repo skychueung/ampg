@@ -1,14 +1,21 @@
 from datetime import datetime
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.generation_run import GenerationRun
 from app.models.task import Task
 from app.models.peptide import PeptideCandidate
-from app.schemas.generation import GenerationRunCreate, GenerationRunOut, GenerationRunDetailOut
+from app.schemas.generation import (
+    GenerationRunCreate,
+    GenerationRunOut,
+    GenerationRunDetailOut,
+    GenerationRunArtifactsOut,
+    ArtifactFileOut,
+)
 from app.runners.background_runner import start_generation_background
 from app.runners.ampgen_runner import placeholder_ampgen_run
-from app.config import LOCAL_DEMO_MAX_COUNT, LOCAL_REAL_SMOKE_MAX_COUNT, DISCLAIMER
+from app.config import LOCAL_DEMO_MAX_COUNT, LOCAL_REAL_SMOKE_MAX_COUNT, DISCLAIMER, ARTIFACT_DIR
 
 router = APIRouter(prefix="/generation-runs")
 
@@ -116,4 +123,66 @@ def get_generation_run_peptides(run_id: int, db: Session = Depends(get_db)):
         "completed_at": run.completed_at,
         "peptides": peptides,
         "disclaimer": DISCLAIMER,
+    }
+
+
+@router.get("/{run_id}/artifacts", response_model=GenerationRunArtifactsOut)
+def get_generation_run_artifacts(run_id: int, db: Session = Depends(get_db)):
+    run = db.query(GenerationRun).filter(GenerationRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Generation run not found")
+
+    task = db.query(Task).filter(Task.id == run.task_id).first()
+    if not task or not task.artifact_dir:
+        return {
+            "artifact_dir": task.artifact_dir if task else None,
+            "files": [],
+            "message": "No artifacts directory configured for this run.",
+        }
+
+    artifact_dir = Path(task.artifact_dir)
+
+    # Security: prevent path traversal by ensuring resolved path stays under ARTIFACT_DIR
+    base_dir = Path(ARTIFACT_DIR).resolve()
+    resolved_dir = artifact_dir.resolve()
+    if not str(resolved_dir).startswith(str(base_dir)):
+        return {
+            "artifact_dir": str(artifact_dir),
+            "files": [],
+            "message": "Invalid artifact directory.",
+        }
+
+    if not artifact_dir.exists():
+        return {
+            "artifact_dir": str(artifact_dir),
+            "files": [],
+            "message": "Artifacts directory does not exist yet.",
+        }
+
+    target_files = [
+        "stdout.log",
+        "stderr.log",
+        "generated_sequences.csv",
+        "generated_sequences.fasta",
+    ]
+    files = []
+    for fname in target_files:
+        fpath = artifact_dir / fname
+        if fpath.exists():
+            stat = fpath.stat()
+            file_type = "log" if fname.endswith(".log") else "csv" if fname.endswith(".csv") else "fasta"
+            files.append(
+                ArtifactFileOut(
+                    name=fname,
+                    exists=True,
+                    size_kb=round(stat.st_size / 1024, 2),
+                    modified_at=datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    type=file_type,
+                )
+            )
+
+    return {
+        "artifact_dir": str(artifact_dir),
+        "files": files,
+        "message": f"Found {len(files)} artifact files.",
     }

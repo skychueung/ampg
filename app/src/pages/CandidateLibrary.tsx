@@ -19,6 +19,7 @@ import {
   StickyNote,
   Copy,
   RefreshCw,
+  ExternalLink,
 } from 'lucide-react'
 import { listPeptides } from '@/api/peptides'
 import type { PeptideCandidate } from '@/api/peptides'
@@ -764,6 +765,7 @@ export default function CandidateLibrary() {
                   <th className="px-3 py-3 text-center">MIC S.aureus</th>
                   <th className="px-3 py-3 text-center">{t('library.columnStatus') as string}</th>
                   <th className="px-3 py-3 text-center">Source</th>
+                  <th className="px-3 py-3 text-center">Source Run</th>
                   <th className="px-3 py-3 text-center">{t('library.columnNotes') as string}</th>
                   <th className="px-3 py-3 text-center">Created At</th>
                   <th className="px-3 py-3 text-center">{t('library.columnActions') as string}</th>
@@ -919,6 +921,25 @@ export default function CandidateLibrary() {
                       {/* Source */}
                       <td className="px-3 py-3 text-center text-[12px] text-[#6B7280]">
                         {peptide.source === 'local_demo' ? 'Demo' : peptide.source === 'local_real_smoke' ? 'Real' : (peptide.source || '-')}
+                      </td>
+
+                      {/* Source Run */}
+                      <td className="px-3 py-3 text-center">
+                        {peptide.generation_run_id ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/generation-runs/${peptide.generation_run_id}`)
+                            }}
+                            className="inline-flex items-center gap-1 text-[12px] text-[#14B8A6] hover:text-[#0D9488] font-medium"
+                            title="View source run"
+                          >
+                            #{peptide.generation_run_id}
+                            <ExternalLink size={10} />
+                          </button>
+                        ) : (
+                          <span className="text-[12px] text-[#9CA3AF]">—</span>
+                        )}
                       </td>
 
                       {/* Notes indicator */}

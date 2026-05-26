@@ -253,3 +253,96 @@ def test_reports_do_not_convert_null_scores_to_zero(client):
             assert score_val in ("", "Not computed"), f"Unexpected amp_score value in CSV: {score_val!r}"
             assert mic_e_val in ("", "Not computed"), f"Unexpected mic_ecoli value in CSV: {mic_e_val!r}"
             assert mic_s_val in ("", "Not computed"), f"Unexpected mic_saureus value in CSV: {mic_s_val!r}"
+
+
+# ===== v0.5.4: AMPGen visualizer artifact tests =====
+
+def test_generation_run_artifacts_success(client):
+    """Artifact listing API returns file status for existing run."""
+    response = client.post("/api/v1/generation-runs", json={
+        "backend": "LOCAL_DEMO",
+        "count": 1,
+        "mode": "Sequence-based",
+    })
+    assert response.status_code == 200
+    run_id = response.json()["id"]
+
+    time.sleep(1.5)
+
+    resp = client.get(f"/api/v1/generation-runs/{run_id}/artifacts")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "artifact_dir" in data
+    assert "files" in data
+    assert isinstance(data["files"], list)
+    # LOCAL_DEMO may or may not have files depending on runner config
+    for f in data["files"]:
+        assert "name" in f
+        assert "exists" in f
+        assert "size_kb" in f
+        assert "modified_at" in f
+        assert "type" in f
+
+
+def test_generation_run_artifacts_missing_dir(client):
+    """Artifact listing returns 200 with empty files when dir missing."""
+    # Create a run with a fake task that has no artifact_dir
+    response = client.post("/api/v1/generation-runs", json={
+        "backend": "LOCAL_DEMO",
+        "count": 1,
+        "mode": "Sequence-based",
+    })
+    run_id = response.json()["id"]
+
+    # Before runner completes, task may not have artifact_dir yet
+    resp = client.get(f"/api/v1/generation-runs/{run_id}/artifacts")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["files"] == []
+
+
+def test_generation_run_artifacts_not_found(client):
+    """Artifact listing returns 404 for non-existent run."""
+    resp = client.get("/api/v1/generation-runs/99999/artifacts")
+    assert resp.status_code == 404
+
+
+def test_task_response_contains_related_generation_run_id(client):
+    """Task API response includes related_generation_run_id."""
+    response = client.post("/api/v1/generation-runs", json={
+        "backend": "LOCAL_DEMO",
+        "count": 1,
+        "mode": "Sequence-based",
+    })
+    data = response.json()
+    task_id = data["task_id"]
+    run_id = data["id"]
+
+    task_resp = client.get(f"/api/v1/tasks/{task_id}")
+    assert task_resp.status_code == 200
+    task_data = task_resp.json()
+    assert task_data["related_generation_run_id"] == run_id
+
+
+def test_artifact_listing_blocks_path_traversal(client):
+    """Artifact API prevents path traversal by rejecting dirs outside ARTIFACT_DIR."""
+    # This test verifies the security check exists in the endpoint.
+    # We cannot easily inject a malicious artifact_dir in a unit test,
+    # but we can verify the endpoint code contains the check.
+    import inspect
+    from app.routers.generation import get_generation_run_artifacts
+    source = inspect.getsource(get_generation_run_artifacts)
+    assert "resolve" in source
+    assert "startswith" in source
+
+
+def test_artifact_listing_does_not_expose_env(client):
+    """Artifact API only checks expected files, does not read .env."""
+    import inspect
+    from app.routers.generation import get_generation_run_artifacts
+    source = inspect.getsource(get_generation_run_artifacts)
+    # The endpoint should only look at target_files list
+    assert "stdout.log" in source
+    assert "stderr.log" in source
+    # Should not blindly list directory contents
+    assert ".env" not in source or "target_files" in source

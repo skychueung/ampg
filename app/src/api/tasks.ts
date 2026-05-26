@@ -3,7 +3,7 @@ import { apiClient } from './client'
 export interface TaskRecord {
   id: number
   type: string
-  status: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED'
+  status: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED' | 'CANCELLED'
   progress: number
   total: number
   message?: string
@@ -13,6 +13,7 @@ export interface TaskRecord {
   updated_at?: string
   completed_at?: string
   error_message?: string
+  related_generation_run_id?: number | null
 }
 
 export function listTasks(status?: string): Promise<TaskRecord[]> {

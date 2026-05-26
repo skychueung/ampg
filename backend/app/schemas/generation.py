@@ -33,6 +33,20 @@ class GenerationRunOut(GenerationRunBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ArtifactFileOut(BaseModel):
+    name: str
+    exists: bool
+    size_kb: float
+    modified_at: str
+    type: str
+
+
+class GenerationRunArtifactsOut(BaseModel):
+    artifact_dir: Optional[str] = None
+    files: List[ArtifactFileOut] = []
+    message: str = ""
+
+
 class GenerationRunDetailOut(GenerationRunOut):
     peptides: List[PeptideCandidateOut] = []
     disclaimer: str = ""

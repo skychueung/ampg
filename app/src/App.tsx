@@ -13,6 +13,8 @@ const TaskCenter = lazy(() => import('./pages/TaskCenter'))
 const ServerMode = lazy(() => import('./pages/ServerMode'))
 const Admin = lazy(() => import('./pages/Admin'))
 const ReportExport = lazy(() => import('./pages/ReportExport'))
+const AMPGenWorkflow = lazy(() => import('./pages/AMPGenWorkflowPage'))
+const GenerationRunDetail = lazy(() => import('./pages/GenerationRunDetailPage'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -28,6 +30,8 @@ function PageTitleProvider({ children }: { children: React.ReactNode }) {
   else if (pathname.startsWith('/peptide/')) title = t('detail.physicochemicalTitle')
   else if (pathname.startsWith('/task-center')) title = t('tasks.title')
   else if (pathname.startsWith('/reports')) title = t('reports.title')
+  else if (pathname.startsWith('/ampgen-workflow')) title = 'AMPGen Workflow'
+  else if (pathname.startsWith('/generation-runs/')) title = 'Generation Run Detail'
 
   return <Layout title={title}>{children}</Layout>
 }
@@ -47,6 +51,8 @@ export default function App() {
             <Route path="/server-mode" element={<ServerMode />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/reports" element={<ReportExport />} />
+            <Route path="/ampgen-workflow" element={<AMPGenWorkflow />} />
+            <Route path="/generation-runs/:runId" element={<GenerationRunDetail />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

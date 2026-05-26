@@ -315,3 +315,73 @@ Returns recent generation runs with peptide counts.
 Returns full peptide details including null scores.
 
 
+
+## Artifacts API (v0.5.4)
+
+### GET /api/v1/generation-runs/{run_id}/artifacts
+
+Returns artifact file status for a generation run.
+
+**Response (200)**:
+```json
+{
+  "artifact_dir": "data/artifacts/run_1_20260526_153454",
+  "files": [
+    {
+      "name": "stdout.log",
+      "exists": true,
+      "size_kb": 12.34,
+      "modified_at": "2026-05-26T15:34:56",
+      "type": "log"
+    }
+  ],
+  "message": "Found 1 artifact files."
+}
+```
+
+**Response (200, empty)**:
+```json
+{
+  "artifact_dir": null,
+  "files": [],
+  "message": "No artifacts directory configured for this run."
+}
+```
+
+**Response (404)**: Run ID does not exist.
+
+**Security**: Path traversal is blocked. Resolved artifact_dir must start with ARTIFACT_DIR.
+
+**Design Note**: LOCAL_DEMO runs return empty `files` because generation is in-memory.
+LOCAL_REAL_SMOKE runs return actual stdout.log, stderr.log, generated_sequences.csv, generated_sequences.fasta.
+
+## Task API Enhancement (v0.5.4)
+
+### GET /api/v1/tasks/{task_id}
+
+Now includes `related_generation_run_id` for generation tasks:
+```json
+{
+  "id": 1,
+  "type": "AMP Generation",
+  "status": "SUCCEEDED",
+  ...,
+  "related_generation_run_id": 1
+}
+```
+
+## Workflow Page APIs (v0.5.4)
+
+The AMPGen Workflow Visualizer page (`/ampgen-workflow`) calls:
+- `GET /api/health`
+- `GET /api/v1/system/ampgen-probe`
+- `GET /api/v1/dashboard/summary`
+
+## Run Detail Page APIs (v0.5.4)
+
+The Generation Run Detail page (`/generation-runs/:runId`) calls:
+- `GET /api/v1/generation-runs/{run_id}`
+- `GET /api/v1/generation-runs/{run_id}/peptides`
+- `GET /api/v1/generation-runs/{run_id}/artifacts`
+- `GET /api/v1/tasks/{task_id}` (if task_id exists)
+- `GET /api/v1/tasks/{task_id}/logs` (when logs panel expanded)

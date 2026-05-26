@@ -14,6 +14,14 @@ from app.config import DISCLAIMER
 router = APIRouter(prefix="/tasks")
 
 
+def _task_to_dict(task: Task, db: Session) -> dict:
+    """Convert Task ORM to dict enriched with related_generation_run_id."""
+    run = db.query(GenerationRun).filter(GenerationRun.task_id == task.id).first()
+    result = {c.name: getattr(task, c.name) for c in Task.__table__.columns}
+    result["related_generation_run_id"] = run.id if run else None
+    return result
+
+
 @router.get("", response_model=list[TaskOut])
 def list_tasks(
     status: Optional[str] = None,
@@ -24,7 +32,8 @@ def list_tasks(
     q = db.query(Task)
     if status:
         q = q.filter(Task.status == status)
-    return q.order_by(Task.id.desc()).offset(skip).limit(limit).all()
+    tasks = q.order_by(Task.id.desc()).offset(skip).limit(limit).all()
+    return [_task_to_dict(t, db) for t in tasks]
 
 
 @router.get("/{task_id}", response_model=TaskOut)
@@ -32,7 +41,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    return task
+    return _task_to_dict(task, db)
 
 
 @router.get("/{task_id}/logs")

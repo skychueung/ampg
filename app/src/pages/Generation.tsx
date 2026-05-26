@@ -15,6 +15,8 @@ import {
   Server,
   Cpu,
   X,
+  Eye,
+  Info,
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/LanguageContext'
 import Layout from '@/components/Layout'
@@ -807,17 +809,54 @@ export default function Generation() {
                 </div>
               )}
 
-              {/* Success navigation buttons */}
-              {genStatus === 'SUCCEEDED' && (
+              {/* LOCAL_REAL_SMOKE notice (post-completion) */}
+              {modelBackend === 'LOCAL_REAL_SMOKE' && (genStatus === 'SUCCEEDED' || genStatus === 'RUNNING') && (
+                <div className="mb-4 p-3 rounded-[6px] bg-[#F0FDFA] border border-[#14B8A6] flex items-start gap-2.5">
+                  <Info size={16} className="text-[#14B8A6] mt-0.5 flex-shrink-0" />
+                  <p className="text-[13px] text-[#0F766E]">
+                    Real AMPGen sequence generation completed. AMP score and MIC are not computed.
+                  </p>
+                </div>
+              )}
+
+              {/* Source badge */}
+              {genStatus !== 'BLOCKED' && runResult && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-[12px] font-medium text-[#6B7280] uppercase tracking-[0.05em]">Source</span>
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                    modelBackend === 'LOCAL_DEMO'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : modelBackend === 'LOCAL_REAL_SMOKE'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-gray-50 text-gray-500 border-gray-200'
+                  }`}>
+                    {modelBackend === 'LOCAL_DEMO' ? 'Local Demo' : modelBackend === 'LOCAL_REAL_SMOKE' ? 'Local Real Smoke' : 'Server Production Blocked'}
+                  </span>
+                </div>
+              )}
+
+              {/* View Run Detail button */}
+              {runResult && runResult.id && (
                 <div className="flex items-center gap-3 mt-4">
                   <button
-                    onClick={() => navigate('/candidates')}
-                    className="px-4 py-2 bg-[#14B8A6] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#0D9488] transition-colors"
+                    onClick={() => navigate(`/generation-runs/${runResult.id}`)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#14B8A6] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#0D9488] transition-colors"
+                  >
+                    <Eye size={14} />
+                    {genStatus === 'RUNNING' || genStatus === 'PENDING'
+                      ? 'View Live Run Detail'
+                      : genStatus === 'SUCCEEDED'
+                      ? 'View Full Run Detail'
+                      : 'View Run Detail'}
+                  </button>
+                  <button
+                    onClick={() => navigate('/candidate-library')}
+                    className="px-4 py-2 bg-[#F3F4F6] text-[#374151] text-[13px] font-medium rounded-[6px] hover:bg-[#E5E7EB] transition-colors"
                   >
                     查看候选肽库
                   </button>
                   <button
-                    onClick={() => navigate('/tasks')}
+                    onClick={() => navigate('/task-center')}
                     className="px-4 py-2 bg-[#F3F4F6] text-[#374151] text-[13px] font-medium rounded-[6px] hover:bg-[#E5E7EB] transition-colors"
                   >
                     查看任务中心

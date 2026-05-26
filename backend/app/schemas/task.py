@@ -40,4 +40,5 @@ class TaskOut(TaskBase):
     updated_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     error_message: Optional[str] = None
+    related_generation_run_id: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)

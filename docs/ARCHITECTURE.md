@@ -147,3 +147,43 @@ No Celery, Redis, or RQ. Background execution uses Python `threading.Thread` onl
 - Main FastAPI worker remains free to handle other requests.
 
 This is sufficient for single-node, low-concurrency use (≤2 concurrent real smoke tasks).
+
+## Artifacts API Architecture (v0.5.4)
+
+```
+GET /api/v1/generation-runs/{run_id}/artifacts
+  ↓
+Query GenerationRun by run_id → 404 if not found
+  ↓
+Query Task by task_id → Check task.artifact_dir
+  ↓
+Security: Path traversal check
+  resolved_artifact_dir must start_with resolved_ARTIFACT_DIR
+  ↓
+Scan target_files: [stdout.log, stderr.log, generated_sequences.csv, generated_sequences.fasta]
+  ↓
+Return file metadata (name, exists, size_kb, modified_at, type)
+```
+
+## New Pages (v0.5.4)
+
+### AMPGenWorkflowPage
+- Route: `/ampgen-workflow`
+- Lazy-loaded chunk: `AMPGenWorkflowPage-*.js` (~18 KB)
+- APIs: `/health`, `/system/ampgen-probe`, `/dashboard/summary`
+
+### GenerationRunDetailPage
+- Route: `/generation-runs/:runId`
+- Lazy-loaded chunk: `GenerationRunDetailPage-*.js` (~29 KB)
+- APIs: `/generation-runs/{id}`, `/generation-runs/{id}/peptides`, `/generation-runs/{id}/artifacts`, `/tasks/{id}`, `/tasks/{id}/logs`
+
+## Task → Run Linkage (v0.5.4)
+
+Tasks router now enriches TaskOut with `related_generation_run_id`:
+```python
+def _task_to_dict(task, db):
+    run = db.query(GenerationRun).filter(GenerationRun.task_id == task.id).first()
+    result = {c.name: getattr(task, c.name) for c in Task.__table__.columns}
+    result["related_generation_run_id"] = run.id if run else None
+    return result
+```

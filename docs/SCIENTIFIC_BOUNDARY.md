@@ -118,3 +118,30 @@ v0.5.1-hotfix 已彻底移除这些假值：
 - 所有展示的 mp_score、MIC 均为真实数据库值（LOCAL_DEMO 为 null）。
 - 用户看到的序列、状态、来源均来自真实 SQLite 数据库。
 
+
+## 11. LOCAL_DEMO artifacts 为空是正常设计（v0.5.4）
+
+LOCAL_DEMO 运行器在内存中直接生成序列并写入 SQLite，**不创建文件 artifacts**。
+因此 `GET /api/v1/generation-runs/{run_id}/artifacts` 对 LOCAL_DEMO 返回：
+```json
+{ "artifact_dir": null, "files": [], "message": "No artifacts directory configured for this run." }
+```
+
+这是**预期行为**，不是缺陷。
+
+LOCAL_REAL_SMOKE 才会产生真实的 stdout.log / stderr.log / generated_sequences.csv / generated_sequences.fasta。
+
+## 12. Run Detail 页面的科学边界（v0.5.4）
+
+Generation Run Detail 页面在以下位置持续展示科学边界：
+- 页面顶部黄色警示横幅：`Computational prediction only. Not experimentally validated.`
+- LOCAL_REAL_SMOKE 结果旁额外说明：`Real AMPGen sequence generation completed. AMP score and MIC are not computed.`
+- Peptides 表格中所有 score 列显示 `Not computed`
+- Workflow 页面顶部和底部均有科学边界提示
+
+## 13. 未接入系统的明确标识（v0.5.4）
+
+AMPGen Workflow Visualizer 页面明确标识以下系统为未接入：
+- SERVER_PRODUCTION: `Not connected / BLOCKED`
+- AMP Discriminator: `Not detected`
+- MIC Scorer: `Not detected`
