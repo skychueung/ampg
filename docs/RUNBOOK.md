@@ -320,3 +320,18 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/dashboard/recent-runs?limit
 `powershell
 Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/peptides/1' -Method GET
 ``n
+
+
+## 前端代码分割
+
+v0.5.3 起，所有页面使用 React.lazy 懒加载。
+
+如果页面加载出现白屏，检查网络面板中对应 chunk 是否成功加载。
+
+`powershell
+# 生产构建
+cd app
+npm run build
+# 检查 dist/assets/ 下的 chunk 分布
+Get-ChildItem dist/assets -Filter *.js | Select-Object Name, @{N='SizeKB';E={[math]::Round(.Length/1KB,1)}}
+``n

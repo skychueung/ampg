@@ -134,3 +134,16 @@ npm run dev
 - Added pp/src/api/dashboard.ts client.
 - pytest 46/46 pass.
 
+
+## v0.5.3-frontend-code-splitting (2026-05-26)
+
+- All major pages now use React.lazy + Suspense for route-level code splitting.
+- Vite manualChunks splits vendor libraries into separate chunks:
+  - vendor-react (react, react-dom, react-router-dom)
+  - vendor-framer (framer-motion)
+  - vendor-recharts (recharts)
+  - vendor-icons (lucide-react)
+- Main JS bundle reduced from ~1333 KB to ~244 KB (gzip: 77 KB).
+- Added PageLoading component for lazy route fallback.
+- No business logic changed.
+

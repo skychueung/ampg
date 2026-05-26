@@ -1,15 +1,18 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { LanguageProvider, useTranslation } from './i18n/LanguageContext'
 import Layout from './components/Layout'
-import Dashboard from './pages/Dashboard'
-import Generation from './pages/Generation'
-import AmpFilter from './pages/AmpFilter'
-import CandidateLibrary from './pages/CandidateLibrary'
-import PeptideDetail from './pages/PeptideDetail'
-import TaskCenter from './pages/TaskCenter'
-import ServerMode from './pages/ServerMode'
-import Admin from './pages/Admin'
-import ReportExport from './pages/ReportExport'
+import PageLoading from './components/PageLoading'
+
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Generation = lazy(() => import('./pages/Generation'))
+const AmpFilter = lazy(() => import('./pages/AmpFilter'))
+const CandidateLibrary = lazy(() => import('./pages/CandidateLibrary'))
+const PeptideDetail = lazy(() => import('./pages/PeptideDetail'))
+const TaskCenter = lazy(() => import('./pages/TaskCenter'))
+const ServerMode = lazy(() => import('./pages/ServerMode'))
+const Admin = lazy(() => import('./pages/Admin'))
+const ReportExport = lazy(() => import('./pages/ReportExport'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -33,18 +36,20 @@ export default function App() {
   return (
     <LanguageProvider>
       <PageTitleProvider>
-        <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/generation" element={<Generation />} />
-          <Route path="/amp-filter" element={<AmpFilter />} />
-          <Route path="/candidate-library" element={<CandidateLibrary />} />
-          <Route path="/peptide/:id" element={<PeptideDetail />} />
-          <Route path="/task-center" element={<TaskCenter />} />
-          <Route path="/server-mode" element={<ServerMode />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/reports" element={<ReportExport />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <Suspense fallback={<PageLoading />}>
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/generation" element={<Generation />} />
+            <Route path="/amp-filter" element={<AmpFilter />} />
+            <Route path="/candidate-library" element={<CandidateLibrary />} />
+            <Route path="/peptide/:id" element={<PeptideDetail />} />
+            <Route path="/task-center" element={<TaskCenter />} />
+            <Route path="/server-mode" element={<ServerMode />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/reports" element={<ReportExport />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Suspense>
       </PageTitleProvider>
     </LanguageProvider>
   )

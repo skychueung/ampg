@@ -2,13 +2,13 @@
 
 ## Current Release
 
-**v0.5.2-dashboard-report-preview-fix**
+**v0.5.3-frontend-code-splitting**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.2-dashboard-report-preview-fix`
-Git Commit: `76550e2`
+Git Tag: `v0.5.3-frontend-code-splitting`
+Git Commit: `68eb5d8`
 
-Previous: v0.5.1-hotfix (2026-05-26, cf5423b)
+Previous: v0.5.2-dashboard-report-preview-fix (2026-05-26, d6cb5ae)
 
 ## Capability Matrix
 
