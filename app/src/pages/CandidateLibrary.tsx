@@ -20,6 +20,7 @@ import {
   Copy,
   RefreshCw,
   ExternalLink,
+  BarChart3,
 } from 'lucide-react'
 import { listPeptides } from '@/api/peptides'
 import type { PeptideCandidate } from '@/api/peptides'
@@ -406,6 +407,13 @@ export default function CandidateLibrary() {
               <span className="font-medium text-[#111827]">{stats.total}</span>
             </p>
           </div>
+          <button
+            onClick={() => navigate('/peptide-analytics')}
+            className="h-[36px] px-3 flex items-center gap-1.5 rounded-[6px] text-[13px] font-medium bg-[#F0FDFA] text-[#14B8A6] border border-[#14B8A6] hover:bg-[#ccfbf1] transition-colors"
+          >
+            <BarChart3 size={14} />
+            Analytics
+          </button>
           <button
             onClick={fetchData}
             disabled={loading}

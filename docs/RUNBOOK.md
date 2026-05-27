@@ -385,3 +385,33 @@ Start-Process "http://localhost:3000/#/generation-runs/1"
 | Generation | "View Run Detail" | `/generation-runs/:id` |
 | TaskCenter | 外部链接图标 (AMP Generation 任务) | `/generation-runs/:id` |
 | CandidateLibrary | "View Source Run" | `/generation-runs/:id` |
+
+## Peptide Analytics 检查 (v0.5.5)
+
+```powershell
+# 访问 Peptide Analytics 页面
+Start-Process "http://localhost:3000/#/peptide-analytics"
+
+# 检查 analytics API
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/peptides-summary' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/property-distributions' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/amino-acid-composition' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/status-source-breakdown' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/filter-rule-pass-rate' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/top-candidates?limit=5' -Method GET
+
+# Smoke test
+.\scripts\smoke_peptide_analytics.ps1
+```
+
+## Analytics 页面验收点
+
+1. Summary cards 显示真实数据
+2. 三个分布图（length, charge, hydrophobic）有 recharts bar chart
+3. 氨基酸组成有 20 个柱状条
+4. Status / Source 有 pie chart
+5. Filter rule pass rate 有四条进度条
+6. Top candidates 表格有 rule_based_rank
+7. 点击 candidate 弹出 drawer
+8. 所有 score 列显示 Not computed
+9. 页面顶部有 "Rule-based ranking only. Not a model prediction." 说明

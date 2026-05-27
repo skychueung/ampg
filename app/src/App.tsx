@@ -15,6 +15,7 @@ const Admin = lazy(() => import('./pages/Admin'))
 const ReportExport = lazy(() => import('./pages/ReportExport'))
 const AMPGenWorkflow = lazy(() => import('./pages/AMPGenWorkflowPage'))
 const GenerationRunDetail = lazy(() => import('./pages/GenerationRunDetailPage'))
+const PeptideAnalytics = lazy(() => import('./pages/PeptideAnalyticsPage'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -32,6 +33,7 @@ function PageTitleProvider({ children }: { children: React.ReactNode }) {
   else if (pathname.startsWith('/reports')) title = t('reports.title')
   else if (pathname.startsWith('/ampgen-workflow')) title = 'AMPGen Workflow'
   else if (pathname.startsWith('/generation-runs/')) title = 'Generation Run Detail'
+  else if (pathname.startsWith('/peptide-analytics')) title = 'Peptide Analytics'
 
   return <Layout title={title}>{children}</Layout>
 }
@@ -53,6 +55,7 @@ export default function App() {
             <Route path="/reports" element={<ReportExport />} />
             <Route path="/ampgen-workflow" element={<AMPGenWorkflow />} />
             <Route path="/generation-runs/:runId" element={<GenerationRunDetail />} />
+            <Route path="/peptide-analytics" element={<PeptideAnalytics />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

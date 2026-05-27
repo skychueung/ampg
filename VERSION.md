@@ -2,21 +2,32 @@
 
 ## Current Release
 
-**v0.5.4-ampgen-visualizer**
+**v0.5.5-peptide-analytics**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.4-ampgen-visualizer`
+Git Tag: `v0.5.5-peptide-analytics`
 
-Previous: v0.5.3-frontend-code-splitting (2026-05-26, d49d3da)
+Previous: v0.5.4-ampgen-visualizer (2026-05-26, e29d302)
 
-## v0.5.4 Highlights
+## v0.5.5 Highlights
 
-- **AMPGen Workflow Visualizer** (`/ampgen-workflow`): New page visualizing the complete AMPGen pipeline — backend modes, workflow steps, and real-time system status.
-- **Generation Run Detail** (`/generation-runs/:runId`): New page showing full run lifecycle — summary, visual timeline, task status, logs, artifacts, and generated peptides.
-- **Artifacts API** (`GET /api/v1/generation-runs/{run_id}/artifacts`): Secure endpoint listing artifact file status (stdout.log, stderr.log, generated_sequences.csv, generated_sequences.fasta) with path-traversal protection.
-- **Task → Run linkage**: Task API now returns `related_generation_run_id` for generation tasks.
-- **Cross-page navigation**: Generation → Run Detail, TaskCenter → Run Detail, CandidateLibrary → Source Run.
-- **Scientific boundary maintained**: All scores remain `Not computed` for LOCAL_DEMO and LOCAL_REAL_SMOKE. Artifacts empty for LOCAL_DEMO is by design (in-memory generation).
+- **Peptide Analytics Dashboard** (`/peptide-analytics`): Visual analytics for generated peptide candidates.
+  - Summary cards: total peptides, candidates, local demo/real smoke counts, averages
+  - Distribution charts: length, net charge, hydrophobic fraction (recharts)
+  - Amino acid composition: 20 standard AA bar chart with frequency
+  - Status & source breakdown: pie charts + backend counts
+  - Filter rule pass rate: 4 physicochemical rules with progress bars
+  - Top rule-based candidates: heuristic ranking, NOT model prediction
+  - Candidate detail drawer: click any candidate to view full properties
+- **Analytics API** (6 endpoints under `/api/v1/analytics`):
+  - `GET /peptides-summary` — aggregated statistics
+  - `GET /property-distributions` — binned histograms
+  - `GET /amino-acid-composition` — 20 AA frequency
+  - `GET /status-source-breakdown` — status/source/backend counts
+  - `GET /filter-rule-pass-rate` — 4 filter rules with pass/fail counts
+  - `GET /top-candidates?limit=N` — rule-based heuristic ranking
+- **Cross-page navigation**: CandidateLibrary, AMPGenWorkflow, GenerationRunDetail all link to Peptide Analytics.
+- **Scientific boundary maintained**: All scores remain `Not computed`. Rule-based ranking explicitly labeled as heuristic only.
 
 ## Capability Matrix
 
@@ -27,19 +38,15 @@ Previous: v0.5.3-frontend-code-splitting (2026-05-26, d49d3da)
 | v0.3 | Frontend real API integration | ✅ |
 | v0.3 | Async task execution (threading.Thread) | ✅ |
 | v0.3 | Frontend polling (3s interval) | ✅ |
-| v0.3 | TaskCenter live logs + artifact_logs | ✅ |
-| v0.3 | LOCAL_REAL_SMOKE end-to-end (count=1) | ✅ |
 | v0.4 | Safe task cancellation | ✅ |
 | v0.5 | Report Export Center (real API) | ✅ |
 | v0.5.1 | Remove fake demo amp_score / MIC values | ✅ |
 | v0.5.2 | Dashboard + ReportExport + PeptideDetail real API | ✅ |
 | v0.5.3 | Frontend code splitting (1333 KB → 244 KB main bundle) | ✅ |
-| v0.5.4 | AMPGen Workflow Visualizer | ✅ |
-| v0.5.4 | Generation Run Detail page | ✅ |
-| v0.5.4 | Artifacts listing API | ✅ |
-| v0.5.4 | Cross-page run navigation | ✅ |
+| v0.5.4 | AMPGen Workflow Visualizer + Run Detail + Artifacts API | ✅ |
+| v0.5.5 | Peptide Analytics Dashboard + 6 analytics APIs | ✅ |
 
-## Upcoming (Not in v0.5.4)
+## Upcoming (Not in v0.5.5)
 
 | Capability | Target |
 |-----------|--------|

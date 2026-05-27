@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db import Base, engine, run_migrations
-from app.routers import health, system, tasks, generation, peptides, filters, reports, dashboard
+from app.routers import health, system, tasks, generation, peptides, filters, reports, dashboard, analytics
 
 Base.metadata.create_all(bind=engine)
 run_migrations()
@@ -28,6 +28,7 @@ app.include_router(peptides.router, prefix="/api/v1")
 app.include_router(filters.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
+app.include_router(analytics.router, prefix="/api/v1")
 
 
 @app.get("/")

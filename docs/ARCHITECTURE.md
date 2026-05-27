@@ -187,3 +187,37 @@ def _task_to_dict(task, db):
     result["related_generation_run_id"] = run.id if run else None
     return result
 ```
+
+## Analytics Architecture (v0.5.5)
+
+```
+GET /api/v1/analytics/* (6 endpoints)
+  ↓
+analytics.py router
+  ↓
+Direct SQLAlchemy aggregation queries on PeptideCandidate table
+  ↓
+No external model calls
+  ↓
+Pure heuristic statistics
+```
+
+### PeptideAnalyticsPage
+
+- Route: `/peptide-analytics`
+- Lazy-loaded chunk: `PeptideAnalyticsPage-*.js` (~30 KB)
+- APIs: all 6 `/analytics/*` endpoints (parallel Promise.all)
+- Charts: recharts (BarChart, PieChart) — already in vendor-recharts chunk
+- Detail drawer: inline side panel (no new route)
+
+### Rule-Based Ranking Algorithm
+
+1. valid_aa == 1 → +1
+2. length 15-35 → +1
+3. net_charge > 0 → +1
+4. hydrophobic_fraction 0.40-0.70 → +1
+5. status == "CANDIDATE" → +1
+
+Tie-breaker: net_charge + hydrophobic_fraction (higher is better)
+
+This is intentionally simple and transparent. It is NOT a machine learning model.

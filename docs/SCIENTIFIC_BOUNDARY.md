@@ -145,3 +145,29 @@ AMPGen Workflow Visualizer 页面明确标识以下系统为未接入：
 - SERVER_PRODUCTION: `Not connected / BLOCKED`
 - AMP Discriminator: `Not detected`
 - MIC Scorer: `Not detected`
+
+## 14. Rule-Based Ranking 不是模型预测（v0.5.5）
+
+Peptide Analytics 页面中的 "Top Rule-Based Candidates" 使用简单的启发式规则排序：
+
+- valid_aa == 1
+- length 15–35
+- net_charge > 0
+- hydrophobic_fraction 0.40–0.70
+- status == CANDIDATE
+
+**这不是 XGBoost 模型预测。**
+**这不是神经网络评分。**
+**这不是实验验证的抗菌活性。**
+
+页面上必须明确显示：
+> Rule-based ranking only. Not a model prediction.
+
+## 15. Analytics 页面的科学边界（v0.5.5）
+
+Peptide Analytics 页面在以下位置展示科学边界：
+- 页面顶部黄色警示横幅
+- 状态标签："Computational prediction only", "AMP score: Not computed", "MIC: Not computed"
+- Top candidates 表格上方明确说明 "Rule-based ranking only. Not a model prediction."
+- Candidate detail drawer 中 amp_score / MIC 显示 "Not computed"
+- 所有分布图和统计仅反映计算生成的序列的理化性质，不反映实验抗菌活性

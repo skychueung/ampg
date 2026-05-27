@@ -385,3 +385,35 @@ The Generation Run Detail page (`/generation-runs/:runId`) calls:
 - `GET /api/v1/generation-runs/{run_id}/artifacts`
 - `GET /api/v1/tasks/{task_id}` (if task_id exists)
 - `GET /api/v1/tasks/{task_id}/logs` (when logs panel expanded)
+
+## Analytics API (v0.5.5)
+
+### GET /api/v1/analytics/peptides-summary
+
+Returns aggregated peptide statistics from real SQLite data.
+
+### GET /api/v1/analytics/property-distributions
+
+Returns binned histograms for length, net charge, and hydrophobic fraction.
+
+### GET /api/v1/analytics/amino-acid-composition
+
+Returns frequency counts for 20 standard amino acids.
+
+### GET /api/v1/analytics/status-source-breakdown
+
+Returns counts grouped by status, source, and backend.
+
+### GET /api/v1/analytics/filter-rule-pass-rate
+
+Returns pass/fail counts for 4 physicochemical filter rules.
+
+### GET /api/v1/analytics/top-candidates?limit=N
+
+Returns rule-based heuristic ranking of top candidates.
+**Important:** This is NOT a model prediction. It uses simple heuristic rules only.
+
+Response includes:
+- `rule_based_rank`: heuristic ranking position
+- `rule_based_reason`: which rules the candidate passes
+- `amp_score`, `mic_ecoli`, `mic_saureus`: will be null (Not computed)

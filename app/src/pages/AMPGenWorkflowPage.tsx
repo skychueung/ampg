@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Workflow, Cpu, Server, AlertTriangle, CheckCircle,
   Zap, Ban, ArrowRight, Activity,
-  ChevronRight, Info,
+  ChevronRight, Info, BarChart3,
 } from 'lucide-react'
 import { apiClient } from '@/api/client'
 import { getDashboardSummary } from '@/api/dashboard'
@@ -166,6 +167,7 @@ function StatusDot({ status }: { status: 'available' | 'planned' | 'blocked' }) 
 /* ------------------------------------------------------------------ */
 
 export default function AMPGenWorkflowPage() {
+  const navigate = useNavigate()
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [dashboard, setDashboard] = useState<DashboardSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -434,6 +436,25 @@ export default function AMPGenWorkflowPage() {
             </div>
           </div>
         )}
+      </motion.div>
+
+      {/* Analytics Link */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.24 }}
+        className="flex items-center gap-3"
+      >
+        <button
+          onClick={() => navigate('/peptide-analytics')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#14B8A6] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#0D9488] transition-colors"
+        >
+          <BarChart3 size={14} />
+          View Peptide Analytics
+        </button>
+        <span className="text-[12px] text-[#6B7280]">
+          After generation, inspect physicochemical distributions of generated peptide candidates.
+        </span>
       </motion.div>
 
       {/* Scientific Boundary Footer */}
