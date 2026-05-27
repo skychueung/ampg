@@ -417,3 +417,129 @@ Response includes:
 - `rule_based_rank`: heuristic ranking position
 - `rule_based_reason`: which rules the candidate passes
 - `amp_score`, `mic_ecoli`, `mic_saureus`: will be null (Not computed)
+
+
+## Sequence Explorer API (v0.5.7)
+
+### GET /api/v1/sequence-explorer/overview
+
+Returns aggregate sequence statistics from real SQLite data.
+
+**Response:**
+```json
+{
+  "total_sequences": 120,
+  "unique_sequences": 115,
+  "duplicate_sequence_count": 3,
+  "near_duplicate_pairs": 0,
+  "average_length": 24.5,
+  "min_length": 15,
+  "max_length": 35,
+  "local_demo_count": 100,
+  "local_real_smoke_count": 20,
+  "disclaimer": "Computational prediction only. Not experimentally validated."
+}
+```
+
+### GET /api/v1/sequence-explorer/duplicates
+
+Returns groups of peptides with identical sequences.
+
+**Response:**
+```json
+{
+  "duplicate_groups": [
+    {
+      "sequence": "KKLFKKILKYLAGPAGIGKLLGG",
+      "count": 2,
+      "peptide_ids": [1, 8],
+      "sources": ["local_demo", "local_real_smoke"],
+      "statuses": ["GENERATED", "CANDIDATE"]
+    }
+  ],
+  "total_duplicate_sequences": 2,
+  "disclaimer": "Computational prediction only. Not experimentally validated."
+}
+```
+
+### GET /api/v1/sequence-explorer/similarity
+
+Query params: `threshold` (0.0–1.0, default 0.8), `limit` (1–500, default 100)
+
+Returns peptide pairs with normalized Levenshtein similarity >= threshold.
+
+**Response:**
+```json
+{
+  "threshold": 0.8,
+  "pairs": [
+    {
+      "peptide_id_1": 1,
+      "sequence_1": "KKLFKKILKYLAGPAGIGKLLGG",
+      "peptide_id_2": 2,
+      "sequence_2": "KKLFKKILKYLAGPAGIGKLLGA",
+      "similarity": 0.9565,
+      "length_1": 24,
+      "length_2": 24,
+      "source_1": "local_real_smoke",
+      "source_2": "local_demo"
+    }
+  ],
+  "pair_count": 1,
+  "disclaimer": "Computational prediction only. Not experimentally validated."
+}
+```
+
+**Important:** Similarity is descriptive only and does not imply functional equivalence.
+
+### GET /api/v1/sequence-explorer/motif-enrichment
+
+Returns descriptive motif statistics (not functional motif validation).
+
+**Response:**
+```json
+{
+  "n_terminal_position_frequencies": [
+    {
+      "position": 1,
+      "frequencies": [{"aa": "K", "count": 3, "frequency": 0.2}]
+    }
+  ],
+  "c_terminal_position_frequencies": [...],
+  "top_dipeptides": [
+    {"motif": "KK", "count": 5, "frequency": 0.03}
+  ],
+  "top_amino_acids": [
+    {"aa": "K", "count": 40, "frequency": 0.15}
+  ],
+  "disclaimer": "Motif statistics are descriptive only and not functional validation."
+}
+```
+
+### GET /api/v1/sequence-explorer/representatives
+
+Query param: `limit` (1–50, default 10)
+
+Returns rule-based representative peptides selected by quality + diversity.
+
+**Response:**
+```json
+{
+  "representatives": [
+    {
+      "peptide_id": 1,
+      "sequence": "KKLFKKILKYLAGPAGIGKLLGG",
+      "length": 24,
+      "net_charge": 5.0,
+      "hydrophobic_fraction": 0.48,
+      "status": "CANDIDATE",
+      "source": "local_real_smoke",
+      "representative_rank": 1,
+      "reason": "Valid AA, positive charge, hydrophobic fraction in target range, low similarity to previous representatives."
+    }
+  ],
+  "disclaimer": "Rule-based representative selection only. Not a model prediction."
+}
+```
+
+**Important:** This is NOT a model prediction. It uses simple heuristic rules + sequence diversity only.

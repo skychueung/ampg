@@ -6,7 +6,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts'
 import {
-  GitCompare, AlertTriangle, BarChart3, CheckCircle, X, Cpu,
+  GitCompare, AlertTriangle, BarChart3, CheckCircle, X, Cpu, Dna,
 } from 'lucide-react'
 import {
   getGenerationRunsSummary,
@@ -505,6 +505,13 @@ export default function RunComparisonPage() {
         >
           <BarChart3 size={14} />
           Global Peptide Analytics
+        </button>
+        <button
+          onClick={() => navigate('/sequence-explorer')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <Dna size={14} />
+          Explore Sequence Similarity
         </button>
       </motion.div>
     </div>

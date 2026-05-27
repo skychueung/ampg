@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   Workflow, Cpu, Server, AlertTriangle, CheckCircle,
   Zap, Ban, ArrowRight, Activity,
-  ChevronRight, Info, BarChart3, GitCompare,
+  ChevronRight, Info, BarChart3, GitCompare, Dna,
 } from 'lucide-react'
 import { apiClient } from '@/api/client'
 import { getDashboardSummary } from '@/api/dashboard'
@@ -458,6 +458,13 @@ export default function AMPGenWorkflowPage() {
         >
           <GitCompare size={14} />
           Compare Runs
+        </button>
+        <button
+          onClick={() => navigate('/sequence-explorer')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <Dna size={14} />
+          Sequence Explorer
         </button>
         <span className="text-[12px] text-[#6B7280]">
           After generation, inspect physicochemical distributions or compare runs side-by-side.

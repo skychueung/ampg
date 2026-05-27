@@ -21,6 +21,7 @@ import {
   RefreshCw,
   ExternalLink,
   BarChart3,
+  Dna,
 } from 'lucide-react'
 import { listPeptides } from '@/api/peptides'
 import type { PeptideCandidate } from '@/api/peptides'
@@ -413,6 +414,13 @@ export default function CandidateLibrary() {
           >
             <BarChart3 size={14} />
             Analytics
+          </button>
+          <button
+            onClick={() => navigate('/sequence-explorer')}
+            className="h-[36px] px-3 flex items-center gap-1.5 rounded-[6px] text-[13px] font-medium bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+          >
+            <Dna size={14} />
+            Sequence Explorer
           </button>
           <button
             onClick={fetchData}

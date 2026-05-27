@@ -129,6 +129,21 @@ AMPGen Agent Platform is a single-node web application with a React frontend and
 | created_at | DateTime | Creation timestamp |
 | updated_at | DateTime | Last update |
 
+## Routers (v0.5.7)
+
+| Router | Prefix | Description |
+|--------|--------|-------------|
+| health | `/api` | Health check |
+| system | `/api/v1` | System probe |
+| tasks | `/api/v1` | Task CRUD + cancel + logs |
+| generation | `/api/v1` | Generation runs + artifacts |
+| peptides | `/api/v1` | Peptide candidates CRUD |
+| filters | `/api/v1` | Filter rules |
+| reports | `/api/v1` | Report export (CSV/FASTA/JSON/Markdown) |
+| dashboard | `/api/v1` | Dashboard summary + recent runs |
+| analytics | `/api/v1` | Peptide analytics (summary, distributions, composition, breakdown, rules, top candidates) |
+| **sequence_explorer** | `/api/v1` | **Sequence-level analysis (overview, duplicates, similarity, motif, representatives)** |
+
 ## Tier System
 
 | Tier | Count Limit | Behavior | Use Case |

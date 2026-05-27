@@ -1,5 +1,30 @@
 # AMPGen Agent Platform Changelog
 
+## v0.5.7-sequence-explorer (2026-05-26)
+
+### Added
+- **Peptide Sequence Explorer** (`/sequence-explorer`): Sequence-level exploration page
+  - Overview cards: total/unique sequences, duplicate groups, avg/min/max length
+  - Duplicate Groups table: exact sequence duplicates with peptide IDs, sources, statuses
+  - Similarity Explorer: adjustable threshold/limit, normalized Levenshtein similarity pairs
+  - Descriptive Motif Statistics: N-terminal / C-terminal position frequencies, top dipeptides, top amino acids
+  - Rule-Based Representatives: greedy selection prioritizing quality + diversity
+- **Sequence Explorer API** (5 new endpoints):
+  - `GET /api/v1/sequence-explorer/overview` — aggregate sequence statistics
+  - `GET /api/v1/sequence-explorer/duplicates` — exact duplicate sequence groups
+  - `GET /api/v1/sequence-explorer/similarity?threshold=0.8&limit=100` — Levenshtein similarity pairs
+  - `GET /api/v1/sequence-explorer/motif-enrichment` — descriptive motif statistics
+  - `GET /api/v1/sequence-explorer/representatives?limit=10` — rule-based representative selection
+- **Cross-page navigation**: CandidateLibrary, PeptideAnalytics, RunComparison, AMPGenWorkflow all link to Sequence Explorer.
+- **Tests**: 8 new pytest cases in `test_sequence_explorer.py`
+- **Smoke test**: `scripts/smoke_sequence_explorer.ps1`
+
+### Design Notes
+- Similarity is explicitly labeled as descriptive only, not functional equivalence.
+- Motif statistics are explicitly labeled as descriptive only, not functional validation.
+- Representative selection is explicitly labeled as rule-based only, not a model prediction.
+- All AMP scores and MIC values continue to display as "Not computed".
+
 ## v0.5.6-run-comparison (2026-05-26)
 
 ### Added

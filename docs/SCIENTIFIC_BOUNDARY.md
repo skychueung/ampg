@@ -171,3 +171,73 @@ Peptide Analytics 页面在以下位置展示科学边界：
 - Top candidates 表格上方明确说明 "Rule-based ranking only. Not a model prediction."
 - Candidate detail drawer 中 amp_score / MIC 显示 "Not computed"
 - 所有分布图和统计仅反映计算生成的序列的理化性质，不反映实验抗菌活性
+
+
+## 16. Sequence Similarity 不是功能相似（v0.5.7）
+
+Sequence Explorer 的 Similarity Explorer 使用 **normalized Levenshtein distance** 计算序列编辑距离：
+
+```
+similarity = 1 - levenshtein_distance / max(len(seq1), len(seq2))
+```
+
+这是一个**纯序列字符串层面的相似性度量**。
+
+**必须明确标识：**
+- 序列相似 ≠ 功能相似
+- 编辑距离小不代表两条肽具有相同的抗菌活性
+- 编辑距离小不代表相同的靶标特异性
+- 相似性结果仅用于序列去重和多样性评估
+
+页面上必须显示：
+> Sequence similarity is descriptive only and does not imply functional equivalence.
+
+## 17. Descriptive Motif Statistics 不是功能 Motif（v0.5.7）
+
+Sequence Explorer 的 Motif / Enrichment 区域统计：
+- N-terminal 前 5 位氨基酸出现频率
+- C-terminal 后 5 位氨基酸出现频率
+- 全序列中最常见的二肽组合
+- 全序列中最常见的单个氨基酸
+
+这些统计是**描述性的**，仅反映当前数据集中氨基酸的位置分布偏好。
+
+**不是功能 motif discovery。**
+**不是结构 motif 预测。**
+**不是结合位点识别。**
+
+页面上必须显示：
+> Descriptive motif statistics only. Not functional motif validation.
+
+## 18. Representative Peptides 不是 Best Peptides（v0.5.7）
+
+Sequence Explorer 的 Representative Peptides 使用以下**启发式规则**贪婪选择：
+
+1. 优先 valid_aa == 1
+2. 优先 length 15–35
+3. 优先 net_charge > 0
+4. 优先 hydrophobic_fraction 0.40–0.70
+5. 优先 status == CANDIDATE / FILTERED
+6. 跳过与已选代表序列相似度 >= 0.85 的肽
+
+**这不是 AMP 活性最优选择。**
+**这不是 XGBoost 模型预测。**
+**这不是实验验证的最优肽。**
+
+representative 的含义是：
+- 在当前数据集中，这条肽的理化性质相对较好
+- 与已选的代表序列有足够的多样性
+- 可用于后续实验筛选的候选起点
+
+页面上必须显示：
+> Rule-based representative selection only. Not a model prediction.
+
+## 19. 序列探索结果仍需实验验证（v0.5.7）
+
+Sequence Explorer 输出的所有结果：
+- Duplicate groups → 仅提示重复，不删除、不合并
+- Similarity pairs → 仅提示序列相似，不做功能判断
+- Motif statistics → 仅描述性统计，不做功能声明
+- Representatives → 仅规则筛选，不做活性保证
+
+**所有候选肽在用于实验前，仍需经过独立验证。**

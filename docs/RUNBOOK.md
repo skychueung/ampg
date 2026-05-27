@@ -415,3 +415,31 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/analytics/top-candidates?li
 7. 点击 candidate 弹出 drawer
 8. 所有 score 列显示 Not computed
 9. 页面顶部有 "Rule-based ranking only. Not a model prediction." 说明
+
+
+## Sequence Explorer 检查 (v0.5.7)
+
+```powershell
+# 访问 Sequence Explorer 页面
+Start-Process "http://localhost:3000/#/sequence-explorer"
+
+# 检查 sequence-explorer API
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/sequence-explorer/overview' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/sequence-explorer/duplicates' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/sequence-explorer/similarity?threshold=0.8&limit=20' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/sequence-explorer/motif-enrichment' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/sequence-explorer/representatives?limit=5' -Method GET
+
+# Smoke test
+.\scripts\smoke_sequence_explorer.ps1
+```
+
+## Sequence Explorer 页面验收点
+
+1. Overview cards 显示 total/unique sequences, duplicate groups, avg/min/max length
+2. Duplicate Groups 表格显示完全重复的序列、count、peptide IDs、sources、statuses
+3. Similarity Explorer 可调整 threshold 和 limit，显示相似序列对和 similarity 值
+4. Motif Statistics 显示 N-terminal / C-terminal 频率、top dipeptides、top amino acids
+5. Representatives 表格显示 rule-based rank、sequence、reason
+6. 所有区域均有科学边界提示
+7. 页面底部有快捷跳转到 CandidateLibrary / PeptideAnalytics / RunComparison

@@ -2,12 +2,29 @@
 
 ## Current Release
 
-**v0.5.6-run-comparison**
+**v0.5.7-sequence-explorer**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.6-run-comparison`
+Git Tag: `v0.5.7-sequence-explorer`
 
-Previous: v0.5.5-peptide-analytics (2026-05-26, dfb8aed)
+Previous: v0.5.6-run-comparison (2026-05-26, 8e79f52)
+
+## v0.5.7 Highlights
+
+- **Peptide Sequence Explorer** (`/sequence-explorer`): Deep sequence-level analysis of generated peptides.
+  - Overview cards: total/unique sequences, duplicate groups, avg/min/max length, source counts
+  - Duplicate Groups: exact sequence duplicates with source/status breakdown
+  - Similarity Explorer: normalized Levenshtein similarity pairs with adjustable threshold (0.0–1.0) and limit
+  - Descriptive Motif Statistics: N-terminal / C-terminal position frequencies, top dipeptides, top amino acids
+  - Rule-Based Representatives: greedy selection by physicochemical quality + sequence diversity
+- **Sequence Explorer API** (5 endpoints under `/api/v1/sequence-explorer`):
+  - `GET /overview` — aggregate sequence statistics
+  - `GET /duplicates` — exact duplicate sequence groups
+  - `GET /similarity` — normalized Levenshtein similarity pairs (threshold, limit)
+  - `GET /motif-enrichment` — descriptive N/C-terminal, dipeptide, AA frequencies
+  - `GET /representatives` — rule-based representative peptide selection
+- **Cross-page navigation**: CandidateLibrary, PeptideAnalytics, RunComparison, AMPGenWorkflow all link to Sequence Explorer.
+- **Scientific boundary maintained**: Similarity explicitly labeled as "descriptive only, not functional equivalence." Motif statistics labeled as "descriptive only, not functional validation." Representatives labeled as "rule-based only, not a model prediction."
 
 ## v0.5.6 Highlights
 
@@ -62,6 +79,7 @@ Previous: v0.5.5-peptide-analytics (2026-05-26, dfb8aed)
 | v0.5.4 | AMPGen Workflow Visualizer + Run Detail + Artifacts API | ✅ |
 | v0.5.5 | Peptide Analytics Dashboard + 6 analytics APIs | ✅ |
 | v0.5.6 | Generation Run Comparison + Run-Level Analytics | ✅ |
+| v0.5.7 | Peptide Sequence Explorer (duplicates, similarity, motif, representatives) | ✅ |
 
 ## Upcoming (Not in v0.5.5)
 
