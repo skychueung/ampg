@@ -1,5 +1,35 @@
 # AMPGen Agent Platform Changelog
 
+## v0.5.9-local-maintenance (2026-05-26)
+
+### Added
+- **Local Maintenance** (`/maintenance`): Full local data maintenance workflow
+  - Storage Summary cards: database size, artifacts size, backup count, peptide/task/shortlist counts
+  - Backup Database: timestamped SQLite backups in `backups/db/`
+  - Backup Artifacts: zip export of `backend/data/artifacts/`
+  - Project Snapshot: zip with README, docs, scripts, git commit/tag, database copy, artifact zip
+  - Restore Database: confirm text required, auto pre-restore backup, blocks on RUNNING/PENDING tasks, path-traversal protected
+  - Cleanup Artifacts: default dry-run, age-based, does not touch DB/backups/model files
+  - Reset Demo Data: confirm text required, defaults keep LOCAL_REAL_SMOKE and review/shortlist data, auto pre-reset backup
+- **Maintenance API** (8 endpoints):
+  - `GET /api/v1/maintenance/storage-summary`
+  - `POST /api/v1/maintenance/backup-database`
+  - `POST /api/v1/maintenance/backup-artifacts`
+  - `POST /api/v1/maintenance/create-project-snapshot`
+  - `GET /api/v1/maintenance/backups`
+  - `POST /api/v1/maintenance/restore-database`
+  - `POST /api/v1/maintenance/cleanup-artifacts`
+  - `POST /api/v1/maintenance/reset-demo-data`
+- **Frontend**: `LocalMaintenancePage.tsx` lazy-loaded, `maintenance.ts` API client, `/maintenance` route, Sidebar entry
+- **Scripts**: `scripts/smoke_maintenance.ps1`, `scripts/backup_project_snapshot.ps1`
+- **Tests**: 12 pytest cases in `test_maintenance.py`
+
+### Design Notes
+- Snapshot excludes `.env`, `.git`, `node_modules`, `dist`, `__pycache__`, `.pytest_cache`, AMPGen model weights.
+- Restore and reset require typed confirmation (`RESTORE`, `RESET DEMO`).
+- Cleanup defaults to `dry_run=true` to prevent accidental deletion.
+- Demo reset defaults preserve real smoke runs and review decisions.
+
 ## v0.5.8-candidate-review-workbench (2026-05-26)
 
 ### Added

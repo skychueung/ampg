@@ -471,3 +471,33 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/candidate-review/shortlist'
 7. Shortlist panel 显示已 shortlist 的肽，支持 CSV / FASTA / Synthesis Order 导出
 8. 所有 score 列显示 Not computed
 9. 科学边界横幅和标签完整
+
+
+## Local Maintenance 检查 (v0.5.9)
+
+```powershell
+# 访问 Local Maintenance 页面
+Start-Process "http://localhost:3000/#/maintenance"
+
+# 检查 maintenance API
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/maintenance/storage-summary' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/maintenance/backups' -Method GET
+
+# Smoke test
+.\scripts\smoke_maintenance.ps1
+
+# 创建项目快照
+.\scripts\backup_project_snapshot.ps1
+```
+
+## Local Maintenance 页面验收点
+
+1. Storage Summary 显示真实的 database size / artifacts size / backup count
+2. Backup Database 生成 timestamped `.db` 文件
+3. Backup Artifacts 生成 zip 文件
+4. Create Project Snapshot 生成包含 manifest 的 zip
+5. Backup List 可刷新并显示所有备份
+6. Restore Database 必须输入 RESTORE 才能执行
+7. Cleanup Artifacts 默认 Dry Run，不删除文件
+8. Reset Demo Data 必须输入 RESET DEMO，默认不删除 LOCAL_REAL_SMOKE 和 review 数据
+9. 后端不可用时显示明确提示

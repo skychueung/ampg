@@ -288,3 +288,29 @@ Synthesis Order CSV 是用于委托多肽合成公司（CRO）的**订单模板*
 - 不会自动填充 0 或假值。
 - 不会触发任何模型预测。
 - 仅更新 review metadata。
+
+
+## 24. Local Maintenance 不改变科学结论（v0.5.9）
+
+Local Maintenance 是数据管理工具，不是实验验证工具：
+
+- **备份/恢复** 只是复制 SQLite 数据库和 artifacts 文件，不改变肽序列的实验验证状态。
+- **Project Snapshot** 包含的是计算结果，不是实验数据。
+- **Cleanup** 删除的是旧 artifacts，不是删除实验记录。
+- **Reset Demo Data** 删除的是 LOCAL_DEMO 生成的假数据，不影响 LOCAL_REAL_SMOKE 的真实模型输出。
+
+维护操作不影响 AMPGen 原始模型目录中的模型权重文件。
+
+## 25. Snapshot 不是实验证据包（v0.5.9）
+
+Project Snapshot 是一个便于迁移和归档的压缩包，包含：
+- 代码文档和脚本
+- 本地数据库副本
+- artifacts zip
+
+**Snapshot 不包含：**
+- AMPGen 原始模型权重（过大且非本项目产出）
+- `.env` 文件（可能含敏感配置）
+- `.git` 目录（快照本身已含 git commit 信息）
+
+Snapshot 是开发/运维工具，不能替代实验记录本或数据管理计划（DMP）。

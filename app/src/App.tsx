@@ -19,6 +19,7 @@ const PeptideAnalytics = lazy(() => import('./pages/PeptideAnalyticsPage'))
 const RunComparison = lazy(() => import('./pages/RunComparisonPage'))
 const SequenceExplorer = lazy(() => import('./pages/SequenceExplorerPage'))
 const CandidateReviewWorkbench = lazy(() => import('./pages/CandidateReviewWorkbenchPage'))
+const LocalMaintenance = lazy(() => import('./pages/LocalMaintenancePage'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -37,6 +38,7 @@ function PageTitleProvider({ children }: { children: React.ReactNode }) {
   else if (pathname.startsWith('/ampgen-workflow')) title = 'AMPGen Workflow'
   else if (pathname.startsWith('/generation-runs/')) title = 'Generation Run Detail'
   else if (pathname.startsWith('/peptide-analytics')) title = 'Peptide Analytics'
+  else if (pathname.startsWith('/maintenance')) title = 'Local Maintenance'
 
   return <Layout title={title}>{children}</Layout>
 }
@@ -62,6 +64,7 @@ export default function App() {
             <Route path="/run-comparison" element={<RunComparison />} />
             <Route path="/sequence-explorer" element={<SequenceExplorer />} />
             <Route path="/candidate-review" element={<CandidateReviewWorkbench />} />
+            <Route path="/maintenance" element={<LocalMaintenance />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

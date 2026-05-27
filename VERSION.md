@@ -2,12 +2,36 @@
 
 ## Current Release
 
-**v0.5.8-candidate-review-workbench**
+**v0.5.9-local-maintenance**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.8-candidate-review-workbench`
+Git Tag: `v0.5.9-local-maintenance`
 
-Previous: v0.5.7-sequence-explorer (2026-05-26, e7aa25b)
+Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
+
+## v0.5.9 Highlights
+
+- **Local Maintenance** (`/maintenance`): Database backup, artifact backup, project snapshot, restore, cleanup, and demo reset.
+  - Storage Summary: real-time database/artifact/backup size and peptide/task counts
+  - Backup Database: timestamped `.db` files in `backups/db/`
+  - Backup Artifacts: zip of `backend/data/artifacts/`
+  - Project Snapshot: zip with README, docs, scripts, git info, database copy, artifact zip
+  - Restore Database: confirm-protected, auto pre-restore backup, blocks on active tasks, path-traversal protected
+  - Cleanup Artifacts: dry-run by default, age-based deletion
+  - Reset Demo Data: confirm-protected, defaults preserve LOCAL_REAL_SMOKE and review/shortlist data, auto pre-reset backup
+- **Maintenance API** (8 endpoints under `/api/v1/maintenance`):
+  - `GET /storage-summary` — local storage stats
+  - `POST /backup-database` — DB backup
+  - `POST /backup-artifacts` — artifacts zip
+  - `POST /create-project-snapshot` — full project snapshot
+  - `GET /backups` — list backups
+  - `POST /restore-database` — restore with confirm + pre-backup
+  - `POST /cleanup-artifacts` — dry-run or confirm cleanup
+  - `POST /reset-demo-data` — demo reset with safety defaults
+- **LocalMaintenancePage**: lazy-loaded React page with status bar, summary cards, backup/restore/cleanup/reset sections
+- **Scripts**: `smoke_maintenance.ps1`, `backup_project_snapshot.ps1`
+- **Tests**: 12 pytest cases in `test_maintenance.py`
+- **Scientific boundary maintained**: Maintenance does not affect AMPGen model files. Snapshot excludes `.env`, `.git`, `node_modules`, model weights.
 
 ## v0.5.8 Highlights
 

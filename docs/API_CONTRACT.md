@@ -635,3 +635,101 @@ Downloads synthesis order template CSV with default values:
 - Purity: 95%
 - Scale: 5mg
 - Remarks: "Computational candidate; not experimentally validated."
+
+
+## Maintenance API (v0.5.9)
+
+### GET /api/v1/maintenance/storage-summary
+
+Returns local storage statistics including database size, artifact size, backup count, and peptide/task counts.
+
+**Response:**
+```json
+{
+  "database_path": "...",
+  "database_exists": true,
+  "database_size_mb": 0.06,
+  "artifact_dir": "...",
+  "artifact_dir_exists": true,
+  "artifact_size_mb": 12.34,
+  "artifact_file_count": 135,
+  "backup_dir": "...",
+  "backup_count": 3,
+  "latest_backup": "ampgen_platform_20260526_120000.db",
+  "peptide_count": 69,
+  "task_count": 45,
+  "reviewed_count": 5,
+  "shortlisted_count": 3,
+  "selected_for_synthesis_count": 2,
+  "disclaimer": "Local maintenance only. No experimental validation is implied."
+}
+```
+
+### POST /api/v1/maintenance/backup-database
+
+Creates a timestamped backup of the SQLite database in `backups/db/`.
+
+**Response:**
+```json
+{
+  "backup_path": "...\\backups\\db\\ampgen_platform_20260526_120000.db",
+  "size_mb": 0.06,
+  "created_at": "2026-05-26T12:00:00"
+}
+```
+
+### POST /api/v1/maintenance/backup-artifacts
+
+Zips `backend/data/artifacts/` into `backups/artifacts/`.
+
+### POST /api/v1/maintenance/create-project-snapshot
+
+Creates a full project snapshot zip in `backups/snapshots/` including:
+- README.md, VERSION.md, CHANGELOG.md
+- docs/, scripts/
+- Git commit/tag info
+- Database copy
+- Artifacts zip
+
+Excludes: `.git`, `.env`, `node_modules`, `dist`, `__pycache__`, model weights.
+
+### GET /api/v1/maintenance/backups
+
+Lists all backups categorized by type.
+
+### POST /api/v1/maintenance/restore-database
+
+**Body:**
+```json
+{
+  "backup_filename": "ampgen_platform_20260526_120000.db",
+  "confirm": true
+}
+```
+
+Requires `confirm: true`. Auto-creates pre-restore backup. Blocks if tasks are RUNNING/PENDING. Path-traversal protected.
+
+### POST /api/v1/maintenance/cleanup-artifacts
+
+**Body:**
+```json
+{
+  "older_than_days": 30,
+  "dry_run": true
+}
+```
+
+Default `dry_run: true`. Returns files that would be deleted without removing them.
+
+### POST /api/v1/maintenance/reset-demo-data
+
+**Body:**
+```json
+{
+  "confirm": true,
+  "include_real_runs": false,
+  "include_review_data": false
+}
+```
+
+Defaults preserve LOCAL_REAL_SMOKE and review/shortlist data. Auto-creates pre-reset backup.

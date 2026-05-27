@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Dna, FlaskConical, Beaker,
-  ClipboardList, Server, FileText, Shield, Workflow,
+  ClipboardList, Server, FileText, Shield, Workflow, Wrench,
   BarChart3, GitCompare, Dna as DnaIcon, ClipboardCheck,
 } from 'lucide-react'
 void GitCompare
@@ -25,6 +25,8 @@ export default function Sidebar({ mode = 'local', onModeChange }: { mode?: 'loca
     { label: 'Peptide Analytics', icon: BarChart3, path: '/peptide-analytics' },
     { label: 'Run Comparison', icon: GitCompare, path: '/run-comparison' },
     { label: 'Sequence Explorer', icon: DnaIcon, path: '/sequence-explorer' },
+    { label: 'Candidate Review', icon: ClipboardCheck, path: '/candidate-review' },
+    { label: 'Local Maintenance', icon: Wrench, path: '/maintenance' },
     { label: t('nav.serverProduction'), icon: Server, path: '/server-mode' },
     { label: t('nav.reports'), icon: FileText, path: '/reports' },
     { label: t('nav.admin'), icon: Shield, path: '/admin' },
