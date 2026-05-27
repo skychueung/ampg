@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import {
   Dna, AlertTriangle, Copy, Check, Beaker, GitCompare,
-  BarChart3, Cpu, Search, Zap,
+  BarChart3, Cpu, Search, Zap, ClipboardCheck,
 } from 'lucide-react'
 import {
   getSequenceOverview,
@@ -572,6 +572,13 @@ export default function SequenceExplorerPage() {
         transition={{ duration: 0.3, delay: 0.35 }}
         className="flex flex-wrap items-center gap-3"
       >
+        <button
+          onClick={() => navigate('/candidate-review')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <ClipboardCheck size={14} />
+          Review Representatives
+        </button>
         <button
           onClick={() => navigate('/candidate-library')}
           className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"

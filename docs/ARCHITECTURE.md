@@ -143,6 +143,7 @@ AMPGen Agent Platform is a single-node web application with a React frontend and
 | dashboard | `/api/v1` | Dashboard summary + recent runs |
 | analytics | `/api/v1` | Peptide analytics (summary, distributions, composition, breakdown, rules, top candidates) |
 | **sequence_explorer** | `/api/v1` | **Sequence-level analysis (overview, duplicates, similarity, motif, representatives)** |
+| **candidate_review** | `/api/v1` | **Candidate review workbench (evidence, review, shortlist, export)** |
 
 ## Tier System
 

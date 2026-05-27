@@ -8,7 +8,7 @@ import {
 import {
   BarChart3, AlertTriangle, Dna, FlaskConical, Beaker,
   TrendingUp, CheckCircle, XCircle, Activity, ChevronRight,
-  X, GitCompare, Workflow,
+  X, GitCompare, Workflow, ClipboardCheck,
 } from 'lucide-react'
 import {
   getPeptidesSummary,
@@ -545,6 +545,13 @@ export default function PeptideAnalyticsPage() {
         >
           <Dna size={14} />
           Explore Sequences
+        </button>
+        <button
+          onClick={() => navigate('/candidate-review')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <ClipboardCheck size={14} />
+          Review Top Candidates
         </button>
         <button
           onClick={() => navigate('/ampgen-workflow')}

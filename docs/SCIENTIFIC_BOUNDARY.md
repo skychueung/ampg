@@ -241,3 +241,50 @@ Sequence Explorer 输出的所有结果：
 - Representatives → 仅规则筛选，不做活性保证
 
 **所有候选肽在用于实验前，仍需经过独立验证。**
+
+
+## 20. Evidence Card 不是实验验证（v0.5.8）
+
+Candidate Review Workbench 的 Evidence Card 使用以下**启发式规则**评估候选肽：
+
+- length 15–35 aa
+- net_charge > 0
+- hydrophobic_fraction 0.40–0.70
+- valid_aa == 1
+
+**这些规则是计算筛选工具，不是实验验证。**
+**pass 不代表这条肽具有抗菌活性。**
+**fail 不代表这条肽完全无效（可能仍值得实验探索）。**
+
+页面上必须显示：
+> Rule-based review only. Not experimentally validated.
+
+## 21. Shortlist 不代表功能有效（v0.5.8）
+
+Shortlist 是用户或规则标记的候选肽集合，用于后续实验规划。
+
+**Shortlist ≠ 实验验证有效。**
+**selected_for_synthesis 只是合成计划标记，不是活性保证。**
+
+所有导出文件（CSV、FASTA、Synthesis Order）必须包含：
+> Computational candidate; not experimentally validated.
+
+用户不得将 shortlist 直接作为实验结论发表。
+
+## 22. Synthesis Order 是计划模板，不是实验结果（v0.5.8）
+
+Synthesis Order CSV 是用于委托多肽合成公司（CRO）的**订单模板**。
+
+- Purity、Scale 是默认建议值，可调整。
+- Salt_Form 标注 "to be confirmed"，需实验确认。
+- Remarks 明确标注 "Computational candidate; not experimentally validated."
+
+合成完成后，仍需独立验证抗菌活性、毒性、溶血性等。
+
+## 23. Review 更新不改变模型分数（v0.5.8）
+
+通过 `POST /candidate-review/candidates/{id}/review` 更新 review 字段时：
+- `amp_score`、`mic_ecoli`、`mic_saureus` 保持 null。
+- 不会自动填充 0 或假值。
+- 不会触发任何模型预测。
+- 仅更新 review metadata。

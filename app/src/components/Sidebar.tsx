@@ -2,10 +2,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Dna, FlaskConical, Beaker,
   ClipboardList, Server, FileText, Shield, Workflow,
-  BarChart3, GitCompare, Dna as DnaIcon,
+  BarChart3, GitCompare, Dna as DnaIcon, ClipboardCheck,
 } from 'lucide-react'
 void GitCompare
 void DnaIcon
+void ClipboardCheck
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/i18n/LanguageContext'
 

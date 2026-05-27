@@ -18,6 +18,7 @@ const GenerationRunDetail = lazy(() => import('./pages/GenerationRunDetailPage')
 const PeptideAnalytics = lazy(() => import('./pages/PeptideAnalyticsPage'))
 const RunComparison = lazy(() => import('./pages/RunComparisonPage'))
 const SequenceExplorer = lazy(() => import('./pages/SequenceExplorerPage'))
+const CandidateReviewWorkbench = lazy(() => import('./pages/CandidateReviewWorkbenchPage'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="/peptide-analytics" element={<PeptideAnalytics />} />
             <Route path="/run-comparison" element={<RunComparison />} />
             <Route path="/sequence-explorer" element={<SequenceExplorer />} />
+            <Route path="/candidate-review" element={<CandidateReviewWorkbench />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

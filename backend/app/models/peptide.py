@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.sql import func
 from app.db import Base
 
@@ -22,5 +22,14 @@ class PeptideCandidate(Base):
     source = Column(String(200), nullable=True)
     generation_run_id = Column(Integer, ForeignKey("generation_runs.id"), nullable=True)
     notes = Column(Text, nullable=True)
+
+    # v0.5.8 — candidate review fields
+    priority = Column(String(20), nullable=True)
+    selected_for_synthesis = Column(Boolean, default=False, nullable=False)
+    batch_label = Column(String(100), nullable=True)
+    review_status = Column(String(50), nullable=True)
+    review_notes = Column(Text, nullable=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -19,6 +19,12 @@ class PeptideCandidateBase(BaseModel):
     source: Optional[str] = None
     generation_run_id: Optional[int] = None
     notes: Optional[str] = None
+    priority: Optional[str] = None
+    selected_for_synthesis: bool = False
+    batch_label: Optional[str] = None
+    review_status: Optional[str] = None
+    review_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
 
 
 class PeptideCandidateCreate(PeptideCandidateBase):
@@ -34,6 +40,12 @@ class PeptideCandidateUpdate(BaseModel):
     mic_saureus: Optional[float] = None
     toxicity_risk: Optional[float] = None
     hemolysis_risk: Optional[float] = None
+    priority: Optional[str] = None
+    selected_for_synthesis: Optional[bool] = None
+    batch_label: Optional[str] = None
+    review_status: Optional[str] = None
+    review_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
 
 
 class PeptideCandidateOut(PeptideCandidateBase):

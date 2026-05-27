@@ -543,3 +543,95 @@ Returns rule-based representative peptides selected by quality + diversity.
 ```
 
 **Important:** This is NOT a model prediction. It uses simple heuristic rules + sequence diversity only.
+
+
+## Candidate Review API (v0.5.8)
+
+### GET /api/v1/candidate-review/candidates
+
+Query params: `status`, `source`, `review_status`, `priority`, `selected_for_synthesis`, `min_length`, `max_length`, `min_charge`, `max_charge`, `min_hydrophobic_fraction`, `max_hydrophobic_fraction`, `limit`
+
+Returns filtered candidates with review fields.
+
+### GET /api/v1/candidate-review/candidates/{peptide_id}/evidence
+
+Returns evidence card with rule-based checks.
+
+**Response:**
+```json
+{
+  "peptide_id": 1,
+  "sequence": "KKLFKKILKYLAGPAGIGKLLGG",
+  "evidence": {
+    "length_rule": {"passed": true, "value": 24, "target": "15-35 aa"},
+    "charge_rule": {"passed": true, "value": 5, "target": ">0"},
+    "hydrophobic_rule": {"passed": true, "value": 0.48, "target": "0.40-0.70"},
+    "valid_aa_rule": {"passed": true, "value": true},
+    "source": "local_real_smoke",
+    "amp_score": null,
+    "mic_ecoli": null,
+    "mic_saureus": null
+  },
+  "rule_based_recommendation": "SHORTLIST_CANDIDATE",
+  "reasons": ["Valid amino acids", "Length 15-35 aa", "Positive net charge"],
+  "disclaimer": "Rule-based review only. Not experimentally validated."
+}
+```
+
+### POST /api/v1/candidate-review/candidates/{peptide_id}/review
+
+**Body:**
+```json
+{
+  "review_status": "SHORTLISTED",
+  "priority": "HIGH",
+  "selected_for_synthesis": true,
+  "batch_label": "round1",
+  "review_notes": "Good profile."
+}
+```
+
+### POST /api/v1/candidate-review/batch-review
+
+**Body:**
+```json
+{
+  "peptide_ids": [1, 2, 3],
+  "review_status": "SHORTLISTED",
+  "priority": "HIGH",
+  "selected_for_synthesis": true,
+  "batch_label": "round1"
+}
+```
+
+**Response:**
+```json
+{
+  "updated_count": 3,
+  "skipped_ids": [],
+  "disclaimer": "Rule-based review only. Not experimentally validated."
+}
+```
+
+### GET /api/v1/candidate-review/shortlist
+
+Returns candidates where `review_status=SHORTLISTED` OR `selected_for_synthesis=true`.
+
+### GET /api/v1/candidate-review/summary
+
+Returns review summary statistics.
+
+### POST /api/v1/candidate-review/export-shortlist.csv
+
+Downloads shortlisted candidates as CSV (UTF-8 with BOM).
+
+### POST /api/v1/candidate-review/export-shortlist.fasta
+
+Downloads shortlisted candidates as FASTA.
+
+### POST /api/v1/candidate-review/export-synthesis-order.csv
+
+Downloads synthesis order template CSV with default values:
+- Purity: 95%
+- Scale: 5mg
+- Remarks: "Computational candidate; not experimentally validated."

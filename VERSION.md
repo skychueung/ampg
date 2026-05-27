@@ -2,12 +2,37 @@
 
 ## Current Release
 
-**v0.5.7-sequence-explorer**
+**v0.5.8-candidate-review-workbench**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.7-sequence-explorer`
+Git Tag: `v0.5.8-candidate-review-workbench`
 
-Previous: v0.5.6-run-comparison (2026-05-26, 8e79f52)
+Previous: v0.5.7-sequence-explorer (2026-05-26, e7aa25b)
+
+## v0.5.8 Highlights
+
+- **Candidate Review Workbench** (`/candidate-review`): End-to-end peptide candidate review, shortlisting, and synthesis planning.
+  - Summary cards: total candidates, unreviewed, shortlisted, selected for synthesis, high priority, rejected
+  - Filter panel: status, source, review_status, priority, selected_for_synthesis, length/charge/hydrophobic fraction ranges
+  - Evidence cards: per-candidate rule-based evidence (length, charge, hydrophobic, valid AA) with pass/fail badges
+  - Rule-based recommendation: SHORTLIST_CANDIDATE / REVIEW / LOW_PRIORITY with reasons
+  - Single review actions: Shortlist, Reject, High Priority, Select for Synthesis
+  - Batch review: multi-select + batch actions
+  - Shortlist panel: export CSV, FASTA, synthesis order template
+  - Synthesis order CSV: Order_ID, Peptide_Name, Sequence, Purity, Scale, Modifications, Salt_Form, Remarks
+- **Candidate Review API** (6 endpoints under `/api/v1/candidate-review`):
+  - `GET /candidates` — filtered candidate list with review fields
+  - `GET /candidates/{id}/evidence` — rule-based evidence card
+  - `POST /candidates/{id}/review` — single candidate review update
+  - `POST /batch-review` — batch review update
+  - `GET /shortlist` — shortlisted / selected-for-synthesis candidates
+  - `GET /summary` — review summary statistics
+  - `POST /export-shortlist.csv` — CSV export
+  - `POST /export-shortlist.fasta` — FASTA export
+  - `POST /export-synthesis-order.csv` — synthesis order template export
+- **Database**: Added `priority`, `selected_for_synthesis`, `batch_label`, `review_status`, `review_notes`, `reviewed_at` to `peptide_candidates`.
+- **Cross-page navigation**: CandidateLibrary, PeptideAnalytics, SequenceExplorer, RunComparison, GenerationRunDetail all link to Review Workbench.
+- **Scientific boundary maintained**: Evidence cards labeled as "rule-based review only." Synthesis order remarks: "Computational candidate; not experimentally validated."
 
 ## v0.5.7 Highlights
 
@@ -80,6 +105,7 @@ Previous: v0.5.6-run-comparison (2026-05-26, 8e79f52)
 | v0.5.5 | Peptide Analytics Dashboard + 6 analytics APIs | ✅ |
 | v0.5.6 | Generation Run Comparison + Run-Level Analytics | ✅ |
 | v0.5.7 | Peptide Sequence Explorer (duplicates, similarity, motif, representatives) | ✅ |
+| v0.5.8 | Candidate Review Workbench (evidence cards, shortlist, batch review, synthesis export) | ✅ |
 
 ## Upcoming (Not in v0.5.5)
 

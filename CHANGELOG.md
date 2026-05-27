@@ -1,5 +1,35 @@
 # AMPGen Agent Platform Changelog
 
+## v0.5.8-candidate-review-workbench (2026-05-26)
+
+### Added
+- **Candidate Review Workbench** (`/candidate-review`): Full review workflow for AMPGen peptide candidates
+  - Summary cards, filter panel, evidence cards, batch review, shortlist panel
+  - Evidence cards: length/charge/hydrophobic/valid-AA rule checks with pass/fail badges
+  - Rule-based recommendation: SHORTLIST_CANDIDATE / REVIEW / LOW_PRIORITY
+  - Single actions: Shortlist, Reject, High Priority, Select for Synthesis
+  - Batch actions: multi-select + batch review
+  - Shortlist exports: CSV, FASTA, synthesis order template
+- **Candidate Review API** (9 endpoints):
+  - `GET /api/v1/candidate-review/candidates` — filtered list with review fields
+  - `GET /api/v1/candidate-review/candidates/{id}/evidence` — evidence card
+  - `POST /api/v1/candidate-review/candidates/{id}/review` — single review update
+  - `POST /api/v1/candidate-review/batch-review` — batch review update
+  - `GET /api/v1/candidate-review/shortlist` — shortlisted candidates
+  - `GET /api/v1/candidate-review/summary` — review summary statistics
+  - `POST /api/v1/candidate-review/export-shortlist.csv` — CSV export
+  - `POST /api/v1/candidate-review/export-shortlist.fasta` — FASTA export
+  - `POST /api/v1/candidate-review/export-synthesis-order.csv` — synthesis order template
+- **Database fields**: `priority`, `selected_for_synthesis`, `batch_label`, `review_status`, `review_notes`, `reviewed_at`
+- **Tests**: 10 new pytest cases in `test_candidate_review.py`
+- **Smoke test**: `scripts/smoke_candidate_review.ps1`
+
+### Design Notes
+- Evidence cards are rule-based only, not model predictions.
+- Synthesis order template includes "Computational candidate; not experimentally validated." in Remarks.
+- All AMP scores and MIC values continue to display as "Not computed".
+- Shortlist does not imply experimental validation.
+
 ## v0.5.7-sequence-explorer (2026-05-26)
 
 ### Added

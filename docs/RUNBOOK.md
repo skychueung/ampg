@@ -443,3 +443,31 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/sequence-explorer/represent
 5. Representatives 表格显示 rule-based rank、sequence、reason
 6. 所有区域均有科学边界提示
 7. 页面底部有快捷跳转到 CandidateLibrary / PeptideAnalytics / RunComparison
+
+
+## Candidate Review Workbench 检查 (v0.5.8)
+
+```powershell
+# 访问 Candidate Review Workbench 页面
+Start-Process "http://localhost:3000/#/candidate-review"
+
+# 检查 candidate-review API
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/candidate-review/summary' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/candidate-review/candidates?limit=5' -Method GET
+Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/candidate-review/shortlist' -Method GET
+
+# Smoke test
+.\scripts\smoke_candidate_review.ps1
+```
+
+## Candidate Review 页面验收点
+
+1. Summary cards 显示 total / unreviewed / shortlisted / selected / high priority / rejected
+2. Filter panel 支持 status / source / review_status / priority / length / charge / hydrophobic 筛选
+3. Evidence cards 显示 length / charge / hydrophobic / valid-AA pass-fail badges
+4. Recommendation badge 显示 SHORTLIST_CANDIDATE / REVIEW / LOW_PRIORITY
+5. Single actions: Shortlist, Reject, High Priority, Select for Synthesis
+6. Batch actions: multi-select + batch review
+7. Shortlist panel 显示已 shortlist 的肽，支持 CSV / FASTA / Synthesis Order 导出
+8. 所有 score 列显示 Not computed
+9. 科学边界横幅和标签完整

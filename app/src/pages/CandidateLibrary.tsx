@@ -22,6 +22,7 @@ import {
   ExternalLink,
   BarChart3,
   Dna,
+  ClipboardCheck,
 } from 'lucide-react'
 import { listPeptides } from '@/api/peptides'
 import type { PeptideCandidate } from '@/api/peptides'
@@ -421,6 +422,13 @@ export default function CandidateLibrary() {
           >
             <Dna size={14} />
             Sequence Explorer
+          </button>
+          <button
+            onClick={() => navigate('/candidate-review')}
+            className="h-[36px] px-3 flex items-center gap-1.5 rounded-[6px] text-[13px] font-medium bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+          >
+            <ClipboardCheck size={14} />
+            Review Workbench
           </button>
           <button
             onClick={fetchData}

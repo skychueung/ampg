@@ -5,7 +5,7 @@ import {
   ArrowLeft, Cpu, Clock, CheckCircle, AlertTriangle,
   FileText, Beaker, Database, Copy, Check, ChevronDown,
   ChevronUp, Dna, ClipboardList,
-  FolderOpen, BarChart3, GitCompare,
+  FolderOpen, BarChart3, GitCompare, ClipboardCheck,
 } from 'lucide-react'
 import { getGenerationRun, getGenerationRunPeptides, getGenerationRunArtifacts } from '@/api/generation'
 import { getTask, getTaskLogs } from '@/api/tasks'
@@ -653,6 +653,13 @@ export default function GenerationRunDetailPage() {
         >
           <GitCompare size={14} />
           Compare Runs
+        </button>
+        <button
+          onClick={() => navigate('/candidate-review')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <ClipboardCheck size={14} />
+          Review Peptides
         </button>
         {peptides.length > 0 && (
           <button

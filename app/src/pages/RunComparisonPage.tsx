@@ -6,7 +6,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts'
 import {
-  GitCompare, AlertTriangle, BarChart3, CheckCircle, X, Cpu, Dna,
+  GitCompare, AlertTriangle, BarChart3, CheckCircle, X, Cpu, Dna, ClipboardCheck,
 } from 'lucide-react'
 import {
   getGenerationRunsSummary,
@@ -512,6 +512,13 @@ export default function RunComparisonPage() {
         >
           <Dna size={14} />
           Explore Sequence Similarity
+        </button>
+        <button
+          onClick={() => navigate('/candidate-review')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <ClipboardCheck size={14} />
+          Review Candidates
         </button>
       </motion.div>
     </div>
