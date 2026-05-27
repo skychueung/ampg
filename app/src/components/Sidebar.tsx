@@ -2,8 +2,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Dna, FlaskConical, Beaker,
   ClipboardList, Server, FileText, Shield, Workflow,
-  BarChart3,
+  BarChart3, GitCompare,
 } from 'lucide-react'
+void GitCompare
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/i18n/LanguageContext'
 

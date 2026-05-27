@@ -5,7 +5,7 @@ import {
   ArrowLeft, Cpu, Clock, CheckCircle, AlertTriangle,
   FileText, Beaker, Database, Copy, Check, ChevronDown,
   ChevronUp, Dna, ClipboardList,
-  FolderOpen, BarChart3,
+  FolderOpen, BarChart3, GitCompare,
 } from 'lucide-react'
 import { getGenerationRun, getGenerationRunPeptides, getGenerationRunArtifacts } from '@/api/generation'
 import { getTask, getTaskLogs } from '@/api/tasks'
@@ -646,6 +646,13 @@ export default function GenerationRunDetailPage() {
         >
           <BarChart3 size={14} />
           View Global Analytics
+        </button>
+        <button
+          onClick={() => navigate('/run-comparison')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <GitCompare size={14} />
+          Compare Runs
         </button>
         {peptides.length > 0 && (
           <button

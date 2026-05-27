@@ -1,5 +1,26 @@
 # AMPGen Agent Platform Changelog
 
+## v0.5.6-run-comparison (2026-05-26)
+
+### Added
+- **Run Comparison Page** (`/run-comparison`): Side-by-side comparison of 2–4 generation runs
+  - Multi-select run picker with backend, status, and count badges
+  - Comparison results table: avg length, net charge, hydrophobic fraction, status counts
+  - Length distribution grouped bar chart
+  - Status distribution radar chart + stacked bar chart
+  - Run metadata cards with per-run color coding
+- **Run-Level Analytics API** (3 new endpoints):
+  - `GET /api/v1/analytics/generation-runs-summary` — lightweight list of all generation runs
+  - `GET /api/v1/analytics/generation-runs/{run_id}/analytics` — per-run analytics (stats, AA composition, filter rules)
+  - `POST /api/v1/analytics/generation-runs/compare` — compare 2–4 runs (enforces min 2, max 4)
+- **Cross-page navigation**: PeptideAnalytics, AMPGenWorkflow, GenerationRunDetail all link to Run Comparison.
+- **Tests**: 7 new pytest cases in `test_analytics_run_comparison.py`
+- **Smoke test**: `scripts/smoke_run_comparison.ps1`
+
+### Design Notes
+- Comparison explicitly labeled as procedural analysis only, not antimicrobial activity benchmarking.
+- All AMP scores and MIC values continue to display as "Not computed".
+
 ## v0.5.5-peptide-analytics (2026-05-26)
 
 ### Added

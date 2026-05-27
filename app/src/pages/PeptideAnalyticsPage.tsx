@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -7,7 +8,7 @@ import {
 import {
   BarChart3, AlertTriangle, Dna, FlaskConical, Beaker,
   TrendingUp, CheckCircle, XCircle, Activity, ChevronRight,
-  X,
+  X, GitCompare, Workflow,
 } from 'lucide-react'
 import {
   getPeptidesSummary,
@@ -96,6 +97,7 @@ function StatCard({
 /* ------------------------------------------------------------------ */
 
 export default function PeptideAnalyticsPage() {
+  const navigate = useNavigate()
   const [summary, setSummary] = useState<PeptideSummary | null>(null)
   const [distributions, setDistributions] = useState<PropertyDistributions | null>(null)
   const [aaComp, setAaComp] = useState<AminoAcidComposition | null>(null)
@@ -521,6 +523,29 @@ export default function PeptideAnalyticsPage() {
             </div>
           </div>
         )}
+      </motion.div>
+
+      {/* Quick Link to Run Comparison */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.4 }}
+        className="flex flex-wrap items-center gap-3"
+      >
+        <button
+          onClick={() => navigate('/run-comparison')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <GitCompare size={14} />
+          Compare Generation Runs
+        </button>
+        <button
+          onClick={() => navigate('/ampgen-workflow')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <Workflow size={14} />
+          AMPGen Workflow
+        </button>
       </motion.div>
 
       {/* Candidate Detail Drawer */}

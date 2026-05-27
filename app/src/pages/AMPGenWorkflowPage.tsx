@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   Workflow, Cpu, Server, AlertTriangle, CheckCircle,
   Zap, Ban, ArrowRight, Activity,
-  ChevronRight, Info, BarChart3,
+  ChevronRight, Info, BarChart3, GitCompare,
 } from 'lucide-react'
 import { apiClient } from '@/api/client'
 import { getDashboardSummary } from '@/api/dashboard'
@@ -452,8 +452,15 @@ export default function AMPGenWorkflowPage() {
           <BarChart3 size={14} />
           View Peptide Analytics
         </button>
+        <button
+          onClick={() => navigate('/run-comparison')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#374151] text-[13px] font-medium rounded-[6px] border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <GitCompare size={14} />
+          Compare Runs
+        </button>
         <span className="text-[12px] text-[#6B7280]">
-          After generation, inspect physicochemical distributions of generated peptide candidates.
+          After generation, inspect physicochemical distributions or compare runs side-by-side.
         </span>
       </motion.div>
 

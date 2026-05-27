@@ -26,6 +26,13 @@ from app.schemas.analytics import (
     FilterRule,
     TopCandidatesOut,
     TopCandidateOut,
+    # v0.5.6
+    GenerationRunsSummaryOut,
+    GenerationRunSummaryItem,
+    GenerationRunAnalyticsOut,
+    GenerationRunsCompareOut,
+    RunCompareItem,
+    GenerationRunsCompareRequest,
 )
 from app.config import DISCLAIMER
 
@@ -310,3 +317,186 @@ def top_candidates(limit: int = 10, db: Session = Depends(get_db)):
         "total": len(peptides),
         "disclaimer": DISCLAIMER,
     }
+
+
+# ============================================================================
+# v0.5.6 — Run Comparison & Run-Level Analytics
+# ============================================================================
+
+
+def _run_to_summary_item(run: GenerationRun) -> GenerationRunSummaryItem:
+    return GenerationRunSummaryItem(
+        id=run.id,
+        task_id=run.task_id,
+        mode=run.mode,
+        backend=run.backend,
+        status=run.status,
+        count=run.count,
+        created_at=run.created_at.isoformat() if run.created_at else "",
+        completed_at=run.completed_at.isoformat() if run.completed_at else None,
+    )
+
+
+@router.get("/generation-runs-summary", response_model=GenerationRunsSummaryOut)
+def generation_runs_summary(db: Session = Depends(get_db)):
+    """Return a lightweight list of all generation runs for comparison selection."""
+    runs = db.query(GenerationRun).order_by(GenerationRun.id.desc()).all()
+    return GenerationRunsSummaryOut(
+        runs=[_run_to_summary_item(r) for r in runs],
+        total=len(runs),
+        disclaimer=DISCLAIMER,
+    )
+
+
+@router.get("/generation-runs/{run_id}/analytics", response_model=GenerationRunAnalyticsOut)
+def generation_run_analytics(run_id: int, db: Session = Depends(get_db)):
+    """Return detailed analytics for a single generation run."""
+    run = db.query(GenerationRun).filter(GenerationRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Generation run not found")
+
+    peptides = db.query(PeptideCandidate).filter(PeptideCandidate.generation_run_id == run_id).all()
+    total = len(peptides)
+
+    if total == 0:
+        return GenerationRunAnalyticsOut(
+            run_id=run_id,
+            total_peptides=0,
+            disclaimer=DISCLAIMER,
+        )
+
+    avg_length = round(sum(p.length for p in peptides) / total, 2)
+    avg_charge = round(sum(p.net_charge or 0 for p in peptides) / total, 2)
+    avg_hydro = round(sum(p.hydrophobic_fraction or 0 for p in peptides) / total, 2)
+
+    # status counts
+    status_counter = Counter(p.status for p in peptides)
+    expected_statuses = {"GENERATED", "FILTERED", "CANDIDATE", "VALIDATED", "REJECTED"}
+    for es in expected_statuses:
+        status_counter.setdefault(es, 0)
+    status_counts = [
+        StatusCount(status=s, count=c)
+        for s, c in sorted(status_counter.items(), key=lambda x: ["GENERATED", "FILTERED", "CANDIDATE", "VALIDATED", "REJECTED"].index(x[0]) if x[0] in expected_statuses else 99)
+    ]
+
+    # amino acid composition
+    aa_counter = Counter()
+    invalid_residues = 0
+    total_residues = 0
+    for p in peptides:
+        seq = p.sequence.upper() if p.sequence else ""
+        for aa in seq:
+            total_residues += 1
+            if aa in STANDARD_AA:
+                aa_counter[aa] += 1
+            else:
+                invalid_residues += 1
+
+    composition = []
+    for aa in sorted(STANDARD_AA):
+        count = aa_counter.get(aa, 0)
+        frequency = round(count / total_residues, 4) if total_residues > 0 else 0.0
+        composition.append(AminoAcidCompositionItem(aa=aa, count=count, frequency=frequency))
+
+    # filter rules
+    length_pass = sum(1 for p in peptides if 15 <= p.length <= 35)
+    valid_aa_pass = sum(1 for p in peptides if p.valid_aa == 1)
+    charge_pass = sum(1 for p in peptides if p.net_charge is not None and p.net_charge > 0)
+    hydro_pass = sum(1 for p in peptides if p.hydrophobic_fraction is not None and 0.40 <= p.hydrophobic_fraction <= 0.70)
+
+    rules = [
+        FilterRule(rule="length_15_35", label="Length 15–35 aa", passed=length_pass, failed=total - length_pass, pass_rate=round(length_pass / total, 4)),
+        FilterRule(rule="valid_amino_acids", label="Valid amino acids", passed=valid_aa_pass, failed=total - valid_aa_pass, pass_rate=round(valid_aa_pass / total, 4)),
+        FilterRule(rule="net_charge_positive", label="Net charge > 0", passed=charge_pass, failed=total - charge_pass, pass_rate=round(charge_pass / total, 4)),
+        FilterRule(rule="hydrophobic_fraction_0_40_0_70", label="Hydrophobic fraction 0.40–0.70", passed=hydro_pass, failed=total - hydro_pass, pass_rate=round(hydro_pass / total, 4)),
+    ]
+
+    return GenerationRunAnalyticsOut(
+        run_id=run_id,
+        total_peptides=total,
+        avg_length=avg_length,
+        avg_net_charge=avg_charge,
+        avg_hydrophobic_fraction=avg_hydro,
+        status_counts=status_counts,
+        amino_acid_composition=composition,
+        filter_rule_pass_rate=rules,
+        disclaimer=DISCLAIMER,
+    )
+
+
+@router.post("/generation-runs/compare", response_model=GenerationRunsCompareOut)
+def compare_generation_runs(payload: GenerationRunsCompareRequest, db: Session = Depends(get_db)):
+    """Compare 2–4 generation runs side-by-side."""
+    run_ids = list(set(payload.run_ids))
+    if len(run_ids) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 runs required for comparison")
+    if len(run_ids) > 4:
+        raise HTTPException(status_code=400, detail="Maximum 4 runs allowed for comparison")
+
+    # Verify all runs exist
+    runs = db.query(GenerationRun).filter(GenerationRun.id.in_(run_ids)).all()
+    found_ids = {r.id for r in runs}
+    missing = set(run_ids) - found_ids
+    if missing:
+        raise HTTPException(status_code=404, detail=f"Run(s) not found: {sorted(missing)}")
+
+    run_map = {r.id: r for r in runs}
+
+    compared = []
+    for rid in run_ids:
+        run = run_map[rid]
+        peptides = db.query(PeptideCandidate).filter(PeptideCandidate.generation_run_id == rid).all()
+        total = len(peptides)
+
+        avg_length = round(sum(p.length for p in peptides) / total, 2) if total > 0 else None
+        avg_charge = round(sum(p.net_charge or 0 for p in peptides) / total, 2) if total > 0 else None
+        avg_hydro = round(sum(p.hydrophobic_fraction or 0 for p in peptides) / total, 2) if total > 0 else None
+
+        candidate_count = sum(1 for p in peptides if p.status == "CANDIDATE")
+        filtered_count = sum(1 for p in peptides if p.status == "FILTERED")
+        rejected_count = sum(1 for p in peptides if p.status == "REJECTED")
+
+        # length distribution
+        length_bins = {"10-14": 0, "15-19": 0, "20-24": 0, "25-29": 0, "30-35": 0, ">35": 0}
+        for p in peptides:
+            l = p.length
+            if l < 15:
+                length_bins["10-14"] += 1
+            elif l < 20:
+                length_bins["15-19"] += 1
+            elif l < 25:
+                length_bins["20-24"] += 1
+            elif l < 30:
+                length_bins["25-29"] += 1
+            elif l <= 35:
+                length_bins["30-35"] += 1
+            else:
+                length_bins[">35"] += 1
+
+        status_counter = Counter(p.status for p in peptides)
+        expected_statuses = {"GENERATED", "FILTERED", "CANDIDATE", "VALIDATED", "REJECTED"}
+        for es in expected_statuses:
+            status_counter.setdefault(es, 0)
+        status_counts = [
+            StatusCount(status=s, count=c)
+            for s, c in sorted(status_counter.items(), key=lambda x: ["GENERATED", "FILTERED", "CANDIDATE", "VALIDATED", "REJECTED"].index(x[0]) if x[0] in expected_statuses else 99)
+        ]
+
+        compared.append(RunCompareItem(
+            run_id=rid,
+            run_info=_run_to_summary_item(run),
+            total_peptides=total,
+            avg_length=avg_length,
+            avg_net_charge=avg_charge,
+            avg_hydrophobic_fraction=avg_hydro,
+            candidate_count=candidate_count,
+            filtered_count=filtered_count,
+            rejected_count=rejected_count,
+            length_distribution=[DistributionBin(bin=k, count=v) for k, v in length_bins.items()],
+            status_counts=status_counts,
+        ))
+
+    return GenerationRunsCompareOut(
+        compared_runs=compared,
+        disclaimer=DISCLAIMER,
+    )

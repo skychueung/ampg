@@ -2,12 +2,28 @@
 
 ## Current Release
 
-**v0.5.5-peptide-analytics**
+**v0.5.6-run-comparison**
 
 Release Date: 2026-05-26
-Git Tag: `v0.5.5-peptide-analytics`
+Git Tag: `v0.5.6-run-comparison`
 
-Previous: v0.5.4-ampgen-visualizer (2026-05-26, e29d302)
+Previous: v0.5.5-peptide-analytics (2026-05-26, dfb8aed)
+
+## v0.5.6 Highlights
+
+- **Run Comparison** (`/run-comparison`): Side-by-side comparison of 2–4 generation runs.
+  - Multi-select run picker with backend/status badges
+  - Comparison table: avg length, charge, hydrophobic fraction, candidate/filtered/rejected counts
+  - Length distribution grouped bar chart (recharts)
+  - Status distribution radar chart
+  - Status stacked bar chart
+  - Run metadata cards with color coding
+- **Run-Level Analytics API** (3 new endpoints under `/api/v1/analytics`):
+  - `GET /generation-runs-summary` — lightweight list of all runs
+  - `GET /generation-runs/{run_id}/analytics` — per-run stats, AA composition, filter rules
+  - `POST /generation-runs/compare` — compare 2–4 runs with aggregated metrics
+- **Cross-page navigation**: PeptideAnalytics, AMPGenWorkflow, GenerationRunDetail all link to Run Comparison.
+- **Scientific boundary maintained**: Comparison is explicitly labeled as "procedural analysis only, not antimicrobial activity benchmarking".
 
 ## v0.5.5 Highlights
 
@@ -45,6 +61,7 @@ Previous: v0.5.4-ampgen-visualizer (2026-05-26, e29d302)
 | v0.5.3 | Frontend code splitting (1333 KB → 244 KB main bundle) | ✅ |
 | v0.5.4 | AMPGen Workflow Visualizer + Run Detail + Artifacts API | ✅ |
 | v0.5.5 | Peptide Analytics Dashboard + 6 analytics APIs | ✅ |
+| v0.5.6 | Generation Run Comparison + Run-Level Analytics | ✅ |
 
 ## Upcoming (Not in v0.5.5)
 

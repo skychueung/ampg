@@ -16,6 +16,7 @@ const ReportExport = lazy(() => import('./pages/ReportExport'))
 const AMPGenWorkflow = lazy(() => import('./pages/AMPGenWorkflowPage'))
 const GenerationRunDetail = lazy(() => import('./pages/GenerationRunDetailPage'))
 const PeptideAnalytics = lazy(() => import('./pages/PeptideAnalyticsPage'))
+const RunComparison = lazy(() => import('./pages/RunComparisonPage'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/ampgen-workflow" element={<AMPGenWorkflow />} />
             <Route path="/generation-runs/:runId" element={<GenerationRunDetail />} />
             <Route path="/peptide-analytics" element={<PeptideAnalytics />} />
+            <Route path="/run-comparison" element={<RunComparison />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

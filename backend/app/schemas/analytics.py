@@ -100,3 +100,60 @@ class TopCandidatesOut(BaseModel):
     candidates: List[TopCandidateOut] = []
     total: int = 0
     disclaimer: str = ""
+
+
+# ---------------------------------------------------------------------------
+# v0.5.6 Run Comparison schemas
+# ---------------------------------------------------------------------------
+
+
+class GenerationRunSummaryItem(BaseModel):
+    id: int
+    task_id: Optional[int] = None
+    mode: Optional[str] = None
+    backend: Optional[str] = None
+    status: str
+    count: int
+    created_at: str
+    completed_at: Optional[str] = None
+
+
+class GenerationRunsSummaryOut(BaseModel):
+    runs: List[GenerationRunSummaryItem] = []
+    total: int = 0
+    disclaimer: str = ""
+
+
+class GenerationRunAnalyticsOut(BaseModel):
+    run_id: int
+    total_peptides: int
+    avg_length: Optional[float] = None
+    avg_net_charge: Optional[float] = None
+    avg_hydrophobic_fraction: Optional[float] = None
+    status_counts: List[StatusCount] = []
+    amino_acid_composition: List[AminoAcidCompositionItem] = []
+    filter_rule_pass_rate: List[FilterRule] = []
+    disclaimer: str = ""
+
+
+class RunCompareItem(BaseModel):
+    run_id: int
+    run_info: GenerationRunSummaryItem
+    total_peptides: int
+    avg_length: Optional[float] = None
+    avg_net_charge: Optional[float] = None
+    avg_hydrophobic_fraction: Optional[float] = None
+    candidate_count: int
+    filtered_count: int
+    rejected_count: int
+    length_distribution: List[DistributionBin] = []
+    status_counts: List[StatusCount] = []
+
+
+class GenerationRunsCompareOut(BaseModel):
+    compared_runs: List[RunCompareItem] = []
+    disclaimer: str = ""
+
+
+class GenerationRunsCompareRequest(BaseModel):
+    run_ids: List[int]
