@@ -11,6 +11,7 @@ from app.models.task import Task
 from app.models.generation_run import GenerationRun
 from app.runners.local_real_smoke_runner import run_local_real_smoke
 from app.runners.local_demo_runner import run_local_demo_generation
+from app.runners.server_production_runner import run_server_production
 
 
 def _worker(run_id: int, task_id: int, backend: str):
@@ -36,6 +37,8 @@ def _worker(run_id: int, task_id: int, backend: str):
             result = run_local_real_smoke(db, run)
         elif backend == "LOCAL_DEMO":
             result = run_local_demo_generation(db, run)
+        elif backend == "SERVER_PRODUCTION":
+            result = run_server_production(db, run)
         else:
             if task:
                 task.status = "BLOCKED"

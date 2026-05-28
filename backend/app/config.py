@@ -13,6 +13,9 @@ ARTIFACT_DIR = Path(os.getenv("ARTIFACT_DIR", "./data/artifacts"))
 LOCAL_REAL_SMOKE_MAX_COUNT = int(os.getenv("LOCAL_REAL_SMOKE_MAX_COUNT", "2"))
 LOCAL_DEMO_MAX_COUNT = int(os.getenv("LOCAL_DEMO_MAX_COUNT", "5"))
 SERVER_PRODUCTION_ENABLED = os.getenv("SERVER_PRODUCTION_ENABLED", "false").lower() == "true"
+SERVER_PRODUCTION_MAX_COUNT = int(os.getenv("SERVER_PRODUCTION_MAX_COUNT", "10"))
+AMPGEN_SERVER_PRODUCTION_DEVICE = os.getenv("AMPGEN_SERVER_PRODUCTION_DEVICE", "cpu")
+SERVER_ARTIFACT_DIR = Path(os.getenv("SERVER_ARTIFACT_DIR", "./data/server-artifacts"))
 
 DISCLAIMER = "Computational prediction only. Not experimentally validated."
 AMPGEN_LOCAL_REAL_SMOKE_DEVICE = os.getenv('AMPGEN_LOCAL_REAL_SMOKE_DEVICE', 'cpu')

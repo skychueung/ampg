@@ -15,7 +15,15 @@ from app.schemas.generation import (
 )
 from app.runners.background_runner import start_generation_background
 from app.runners.ampgen_runner import placeholder_ampgen_run
-from app.config import LOCAL_DEMO_MAX_COUNT, LOCAL_REAL_SMOKE_MAX_COUNT, DISCLAIMER, ARTIFACT_DIR
+from app.config import (
+    LOCAL_DEMO_MAX_COUNT,
+    LOCAL_REAL_SMOKE_MAX_COUNT,
+    SERVER_PRODUCTION_ENABLED,
+    SERVER_PRODUCTION_MAX_COUNT,
+    DISCLAIMER,
+    ARTIFACT_DIR,
+    SERVER_ARTIFACT_DIR,
+)
 
 router = APIRouter(prefix="/generation-runs")
 
@@ -79,8 +87,30 @@ def create_generation_run(payload: GenerationRunCreate, db: Session = Depends(ge
         start_generation_background(run.id, task.id, backend)
         return run
 
+    elif backend == "SERVER_PRODUCTION":
+        if not SERVER_PRODUCTION_ENABLED:
+            task.status = "BLOCKED"
+            run.status = "BLOCKED"
+            task.message = (
+                "Server production backend is not enabled. "
+                "Set SERVER_PRODUCTION_ENABLED=true and configure SERVER_ARTIFACT_DIR."
+            )
+            db.commit()
+            return run
+        if count > SERVER_PRODUCTION_MAX_COUNT:
+            task.status = "BLOCKED"
+            run.status = "BLOCKED"
+            task.message = (
+                f"SERVER_PRODUCTION backend is limited to {SERVER_PRODUCTION_MAX_COUNT} peptides. "
+                f"Requested {count}."
+            )
+            db.commit()
+            return run
+        start_generation_background(run.id, task.id, backend)
+        return run
+
     else:
-        # SERVER_PRODUCTION or anything else
+        # Unknown backend
         result = placeholder_ampgen_run()
         task.status = "BLOCKED"
         run.status = "BLOCKED"
@@ -142,10 +172,13 @@ def get_generation_run_artifacts(run_id: int, db: Session = Depends(get_db)):
 
     artifact_dir = Path(task.artifact_dir)
 
-    # Security: prevent path traversal by ensuring resolved path stays under ARTIFACT_DIR
+    # Security: prevent path traversal by ensuring resolved path stays under ARTIFACT_DIR or SERVER_ARTIFACT_DIR
     base_dir = Path(ARTIFACT_DIR).resolve()
+    server_base_dir = Path(SERVER_ARTIFACT_DIR).resolve()
     resolved_dir = artifact_dir.resolve()
-    if not str(resolved_dir).startswith(str(base_dir)):
+    under_base = str(resolved_dir).startswith(str(base_dir))
+    under_server = str(resolved_dir).startswith(str(server_base_dir))
+    if not under_base and not under_server:
         return {
             "artifact_dir": str(artifact_dir),
             "files": [],
