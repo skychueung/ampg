@@ -2,7 +2,7 @@
 
 Constraints:
 - count <= LOCAL_REAL_SMOKE_MAX_COUNT (default 2)
-- CPU only (--to_device cpu)
+- GPU/CPU device configurable via AMPGEN_LOCAL_REAL_SMOKE_DEVICE env var (default: cpu)
 - Saves stdout, stderr, artifact CSV, and FASTA to artifact_dir.
 """
 import csv
@@ -14,6 +14,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.config import (
+    AMPGEN_LOCAL_REAL_SMOKE_DEVICE,
     AMPGEN_ROOT,
     ARTIFACT_DIR,
     LOCAL_REAL_SMOKE_MAX_COUNT,
@@ -76,7 +77,7 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
             "--total_sequences", str(run.count),
             "--batch_size", "1",
             "--output_file", str(output_csv),
-            "--to_device", "cpu",
+            "--to_device", AMPGEN_LOCAL_REAL_SMOKE_DEVICE,
         ]
     elif mode == "MSA-based":
         script = AMPGEN_GENERATOR_DIR / "conditional_generation_msa.py"
@@ -87,7 +88,7 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
             "--directory_path", str(msa_dir),
             "--output_csv_file", str(output_csv),
             "--max_retries", "5",
-            "--to_device", "cpu",
+            "--to_device", AMPGEN_LOCAL_REAL_SMOKE_DEVICE,
             "--total_sequences", str(run.count),
         ]
     elif mode == "MSA-conditional":
@@ -99,7 +100,7 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
             "--batch_size", "1",
             "--n_sequences", "64",
             "--output_csv_file", str(output_csv),
-            "--to_device", "cpu",
+            "--to_device", AMPGEN_LOCAL_REAL_SMOKE_DEVICE,
         ]
     else:
         return {

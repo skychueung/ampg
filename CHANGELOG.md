@@ -1,5 +1,25 @@
 # AMPGen Agent Platform Changelog
 
+## v0.6.1-server-gpu-smoke-config (2026-05-28)
+
+### Added
+- **LOCAL_REAL_SMOKE GPU device configuration**: AMPGEN_LOCAL_REAL_SMOKE_DEVICE environment variable.
+  - ackend/app/config.py: Added AMPGEN_LOCAL_REAL_SMOKE_DEVICE = os.getenv('AMPGEN_LOCAL_REAL_SMOKE_DEVICE', 'cpu').
+  - ackend/app/runners/local_real_smoke_runner.py: Replaced 3 hardcoded --to_device cpu with configurable AMPGEN_LOCAL_REAL_SMOKE_DEVICE.
+  - Supports cpu, cuda, cuda:0, cuda:1, etc.
+
+### Design Notes
+- Default remains cpu for backward compatibility with local development.
+- Server deployment should set AMPGEN_LOCAL_REAL_SMOKE_DEVICE=cuda:1 in ackend/.env.
+- This is a **computational smoke test only**, not experimental validation.
+- amp_score, mic_ecoli, mic_saureus continue to be 
+ull / Not computed.
+
+### Tests
+- pytest 96/96 pass (local).
+- npm build 0 TypeScript errors.
+- Server LOCAL_REAL_SMOKE count=1 succeeded on GPU (cuda:1), generating 1 real AMPGen sequence.
+
 ## v0.6.0-local-mvp-seal (2026-05-28)
 
 ### Seal Validation

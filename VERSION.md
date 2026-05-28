@@ -2,12 +2,18 @@
 
 ## Current Release
 
-**v0.5.9-local-maintenance**
+**v0.6.1-server-gpu-smoke-config**
 
-Release Date: 2026-05-26
-Git Tag: `v0.5.9-local-maintenance`
+Release Date: 2026-05-28
+Git Tag: `v0.6.1-server-gpu-smoke-config`
 
-Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
+Previous: v0.6.0-local-mvp-seal (2026-05-28, b96bdaa)
+
+### v0.6.1 Highlights
+- **LOCAL_REAL_SMOKE device configurable**: Added AMPGEN_LOCAL_REAL_SMOKE_DEVICE env var.
+- **Default device**: cpu (backward compatible).
+- **Server deployment**: Set AMPGEN_LOCAL_REAL_SMOKE_DEVICE=cuda:1 for GPU generation.
+- **Scientific boundary maintained**: amp_score, mic_ecoli, mic_saureus remain null.
 
 ## v0.5.9 Highlights
 

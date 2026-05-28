@@ -15,3 +15,4 @@ LOCAL_DEMO_MAX_COUNT = int(os.getenv("LOCAL_DEMO_MAX_COUNT", "5"))
 SERVER_PRODUCTION_ENABLED = os.getenv("SERVER_PRODUCTION_ENABLED", "false").lower() == "true"
 
 DISCLAIMER = "Computational prediction only. Not experimentally validated."
+AMPGEN_LOCAL_REAL_SMOKE_DEVICE = os.getenv('AMPGEN_LOCAL_REAL_SMOKE_DEVICE', 'cpu')
