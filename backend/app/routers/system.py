@@ -9,6 +9,10 @@ from app.config import (
     AMPGEN_LOCAL_REAL_SMOKE_DEVICE,
     AMPGEN_ROOT,
     AMPGEN_VISUALIZATION_ROOT,
+    SERVER_BATCH_ENABLED,
+    SERVER_BATCH_MAX_TOTAL_COUNT,
+    SERVER_BATCH_CHUNK_SIZE,
+    SERVER_BATCH_MAX_CONCURRENCY,
 )
 
 router = APIRouter(prefix="/system")
@@ -37,6 +41,10 @@ def runtime_config():
         "local_real_smoke_device": AMPGEN_LOCAL_REAL_SMOKE_DEVICE,
         "ampgen_root": str(AMPGEN_ROOT),
         "visualization_root": str(AMPGEN_VISUALIZATION_ROOT),
+        "server_batch_enabled": SERVER_BATCH_ENABLED,
+        "server_batch_max_total_count": SERVER_BATCH_MAX_TOTAL_COUNT,
+        "server_batch_chunk_size": SERVER_BATCH_CHUNK_SIZE,
+        "server_batch_max_concurrency": SERVER_BATCH_MAX_CONCURRENCY,
         "mode": "server" if SERVER_PRODUCTION_ENABLED else "local",
         "disclaimer": (
             "Server production generates sequences only. "

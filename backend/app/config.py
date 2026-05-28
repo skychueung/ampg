@@ -19,4 +19,9 @@ SERVER_ARTIFACT_DIR = Path(os.getenv("SERVER_ARTIFACT_DIR", "./data/server-artif
 
 AMPGEN_VISUALIZATION_ROOT = Path(os.getenv("AMPGEN_VISUALIZATION_ROOT", str(BASE_DIR)))
 DISCLAIMER = "Computational prediction only. Not experimentally validated."
+SERVER_BATCH_ENABLED = os.getenv("SERVER_BATCH_ENABLED", "false").lower() == "true"
+SERVER_BATCH_MAX_TOTAL_COUNT = int(os.getenv("SERVER_BATCH_MAX_TOTAL_COUNT", "50"))
+SERVER_BATCH_CHUNK_SIZE = int(os.getenv("SERVER_BATCH_CHUNK_SIZE", "10"))
+SERVER_BATCH_MAX_CONCURRENCY = int(os.getenv("SERVER_BATCH_MAX_CONCURRENCY", "1"))
+
 AMPGEN_LOCAL_REAL_SMOKE_DEVICE = os.getenv('AMPGEN_LOCAL_REAL_SMOKE_DEVICE', 'cpu')

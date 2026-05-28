@@ -8,6 +8,10 @@ export interface RuntimeConfig {
   local_real_smoke_device: string
   ampgen_root: string
   visualization_root: string
+  server_batch_enabled: boolean
+  server_batch_max_total_count: number
+  server_batch_chunk_size: number
+  server_batch_max_concurrency: number
   mode: 'server' | 'local'
   disclaimer: string
 }

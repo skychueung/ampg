@@ -20,6 +20,7 @@ const RunComparison = lazy(() => import('./pages/RunComparisonPage'))
 const SequenceExplorer = lazy(() => import('./pages/SequenceExplorerPage'))
 const CandidateReviewWorkbench = lazy(() => import('./pages/CandidateReviewWorkbenchPage'))
 const LocalMaintenance = lazy(() => import('./pages/LocalMaintenancePage'))
+const ServerBatch = lazy(() => import('./pages/ServerBatchPage'))
 
 function PageTitleProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="/sequence-explorer" element={<SequenceExplorer />} />
             <Route path="/candidate-review" element={<CandidateReviewWorkbench />} />
             <Route path="/maintenance" element={<LocalMaintenance />} />
+            <Route path="/server-batches" element={<ServerBatch />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>
