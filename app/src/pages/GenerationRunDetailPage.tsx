@@ -56,7 +56,7 @@ function backendBadge(backend: string | undefined): { text: string; className: s
     case 'LOCAL_REAL_SMOKE':
       return { text: 'LOCAL_REAL_SMOKE', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
     case 'SERVER_PRODUCTION':
-      return { text: 'SERVER_PRODUCTION', className: 'bg-gray-50 text-gray-500 border-gray-200' }
+      return { text: 'SERVER_PRODUCTION', className: 'bg-amber-50 text-amber-700 border-amber-200' }
     default:
       return { text: backend || 'Unknown', className: 'bg-gray-50 text-gray-500 border-gray-200' }
   }
@@ -286,7 +286,8 @@ export default function GenerationRunDetailPage() {
         <AlertTriangle size={14} className="text-[#DC2626] mt-0.5 flex-shrink-0" />
         <p className="text-[12px] text-[#991B1B]">
           Computational prediction only. Not experimentally validated.
-          {run.backend === 'LOCAL_REAL_SMOKE' && ' Real AMPGen sequence generation completed. AMP score and MIC are not computed.'}
+          {(run.backend === 'LOCAL_REAL_SMOKE' || run.backend === 'SERVER_PRODUCTION') &&
+            ` ${run.backend === 'SERVER_PRODUCTION' ? 'Server Production GPU' : 'Real AMPGen'} sequence generation completed. AMP score and MIC are not computed.`}
         </p>
       </motion.div>
 
@@ -349,6 +350,22 @@ export default function GenerationRunDetailPage() {
               <span className="text-[#6B7280] block text-[12px] mb-0.5">Temperature</span>
               <span className="text-[#111827]">{run.temperature}</span>
             </div>
+          )}
+          {run.backend === 'SERVER_PRODUCTION' && (
+            <>
+              <div>
+                <span className="text-[#6B7280] block text-[12px] mb-0.5">Device</span>
+                <span className="font-mono text-[#111827]">cuda:1</span>
+              </div>
+              <div>
+                <span className="text-[#6B7280] block text-[12px] mb-0.5">Generation Mode</span>
+                <span className="text-[#111827]">unconditional</span>
+              </div>
+              <div>
+                <span className="text-[#6B7280] block text-[12px] mb-0.5">Scores</span>
+                <span className="text-[#9CA3AF]">Not computed</span>
+              </div>
+            </>
           )}
           {task?.message && (
             <div className="col-span-3">
@@ -599,7 +616,13 @@ export default function GenerationRunDetailPage() {
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-center text-[12px] text-[#6B7280]">
-                      {p.source === 'local_demo' ? 'Demo' : p.source === 'local_real_smoke' ? 'Real' : (p.source || '—')}
+                      {p.source === 'local_demo'
+                        ? 'Demo'
+                        : p.source === 'local_real_smoke'
+                        ? 'Real'
+                        : p.source === 'server_production'
+                        ? 'Server'
+                        : (p.source || '—')}
                     </td>
                     <td className="px-3 py-2.5 text-center text-[12px] text-[#9CA3AF]">Not computed</td>
                     <td className="px-3 py-2.5 text-center text-[12px] text-[#9CA3AF]">Not computed</td>

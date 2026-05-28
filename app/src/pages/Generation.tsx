@@ -24,6 +24,8 @@ import StatusBadge from '@/components/StatusBadge'
 import { createGenerationRun, getGenerationRunPeptides } from '@/api/generation'
 import type { GenerationRun } from '@/api/generation'
 import { getTask, getTaskLogs, cancelTask, type TaskRecord } from '@/api/tasks'
+import { getRuntimeConfig } from '@/api/system'
+import type { RuntimeConfig } from '@/api/system'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -82,8 +84,14 @@ export default function Generation() {
   const [taskInfo, setTaskInfo] = useState<TaskRecord | null>(null)
   const [logs, setLogs] = useState<string[]>([])
   const [elapsed, setElapsed] = useState<number>(0)
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  /* load runtime config on mount */
+  useEffect(() => {
+    getRuntimeConfig().then(setRuntimeConfig).catch(() => {})
+  }, [])
 
   const countValue = isCustom ? parseInt(customCount) || 0 : peptideCount
 
@@ -117,12 +125,25 @@ export default function Generation() {
       return
     }
     if (modelBackend === 'SERVER_PRODUCTION') {
-      setGenStatus('BLOCKED')
-      setTaskId(`task-${Date.now()}`)
-      setGenerated([])
-      setRunResult(null)
-      setErrorMsg(null)
-      return
+      if (!runtimeConfig?.server_production_enabled) {
+        setGenStatus('BLOCKED')
+        setTaskId(`task-${Date.now()}`)
+        setGenerated([])
+        setRunResult(null)
+        setErrorMsg('Server production backend is not enabled.')
+        return
+      }
+      const maxCount = runtimeConfig?.server_production_max_count || 10
+      if (count > maxCount) {
+        setGenStatus('BLOCKED')
+        setTaskId(`task-${Date.now()}`)
+        setGenerated([])
+        setRunResult(null)
+        setErrorMsg(
+          `SERVER_PRODUCTION is limited to ${maxCount} peptides in current small-scale mode.`
+        )
+        return
+      }
     }
 
     if (intervalRef.current) {
@@ -443,11 +464,55 @@ export default function Generation() {
               >
                 <option value="LOCAL_DEMO">Local Demo</option>
                 <option value="LOCAL_REAL_SMOKE">Local Real Smoke</option>
-                <option value="SERVER_PRODUCTION">Server Production (未连接)</option>
+                <option value="SERVER_PRODUCTION">
+                  {runtimeConfig?.server_production_enabled
+                    ? 'Server Production (GPU)'
+                    : 'Server Production (disabled)'}
+                </option>
               </select>
               <p className="text-[12px] text-[#9CA3AF] mt-1">
                 {t('generation.backendNote') as string}
               </p>
+
+              {/* SERVER_PRODUCTION status panel */}
+              {runtimeConfig && modelBackend === 'SERVER_PRODUCTION' && (
+                <div className="mt-3 p-3 rounded-[6px] bg-[#FFFBEB] border border-[#FDE68A] space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Server size={14} className="text-[#D97706]" />
+                    <span className="text-[13px] font-medium text-[#92400E]">
+                      Server Production
+                    </span>
+                    <span
+                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                        runtimeConfig.server_production_enabled
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-gray-50 text-gray-500 border-gray-200'
+                      }`}
+                    >
+                      {runtimeConfig.server_production_enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  {runtimeConfig.server_production_enabled && (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[12px] text-[#78350F]">
+                      <div>
+                        <span className="text-[#B45309]">Max count:</span>{' '}
+                        {runtimeConfig.server_production_max_count}
+                      </div>
+                      <div>
+                        <span className="text-[#B45309]">Device:</span>{' '}
+                        {runtimeConfig.server_production_device}
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[#B45309]">Artifact dir:</span>{' '}
+                        <span className="font-mono text-[11px]">{runtimeConfig.server_artifact_dir}</span>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-[#B45309] mt-1">
+                    Server Production uses GPU generation on server. It generates sequences only. AMP score and MIC are not computed.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Advanced Options */}
@@ -809,15 +874,18 @@ export default function Generation() {
                 </div>
               )}
 
-              {/* LOCAL_REAL_SMOKE notice (post-completion) */}
-              {modelBackend === 'LOCAL_REAL_SMOKE' && (genStatus === 'SUCCEEDED' || genStatus === 'RUNNING') && (
-                <div className="mb-4 p-3 rounded-[6px] bg-[#F0FDFA] border border-[#14B8A6] flex items-start gap-2.5">
-                  <Info size={16} className="text-[#14B8A6] mt-0.5 flex-shrink-0" />
-                  <p className="text-[13px] text-[#0F766E]">
-                    Real AMPGen sequence generation completed. AMP score and MIC are not computed.
-                  </p>
-                </div>
-              )}
+              {/* LOCAL_REAL_SMOKE / SERVER_PRODUCTION notice (post-completion) */}
+              {(modelBackend === 'LOCAL_REAL_SMOKE' || modelBackend === 'SERVER_PRODUCTION') &&
+                (genStatus === 'SUCCEEDED' || genStatus === 'RUNNING') && (
+                  <div className="mb-4 p-3 rounded-[6px] bg-[#F0FDFA] border border-[#14B8A6] flex items-start gap-2.5">
+                    <Info size={16} className="text-[#14B8A6] mt-0.5 flex-shrink-0" />
+                    <p className="text-[13px] text-[#0F766E]">
+                      {modelBackend === 'SERVER_PRODUCTION'
+                        ? 'Server Production GPU generation completed. AMP score and MIC are not computed.'
+                        : 'Real AMPGen sequence generation completed. AMP score and MIC are not computed.'}
+                    </p>
+                  </div>
+                )}
 
               {/* Source badge */}
               {genStatus !== 'BLOCKED' && runResult && (
@@ -830,7 +898,11 @@ export default function Generation() {
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : 'bg-gray-50 text-gray-500 border-gray-200'
                   }`}>
-                    {modelBackend === 'LOCAL_DEMO' ? 'Local Demo' : modelBackend === 'LOCAL_REAL_SMOKE' ? 'Local Real Smoke' : 'Server Production Blocked'}
+                    {modelBackend === 'LOCAL_DEMO'
+                      ? 'Local Demo'
+                      : modelBackend === 'LOCAL_REAL_SMOKE'
+                      ? 'Local Real Smoke'
+                      : 'Server Production'}
                   </span>
                 </div>
               )}

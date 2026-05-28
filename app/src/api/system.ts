@@ -1,13 +1,17 @@
 import { apiClient } from './client'
 
-export interface AmpgenProbeResult {
+export interface RuntimeConfig {
+  server_production_enabled: boolean
+  server_production_max_count: number
+  server_production_device: string
+  server_artifact_dir: string
+  local_real_smoke_device: string
   ampgen_root: string
-  exists: boolean
-  items: Record<string, boolean>
-  all_present: boolean
+  visualization_root: string
+  mode: 'server' | 'local'
   disclaimer: string
 }
 
-export function probeAmpgen(): Promise<AmpgenProbeResult> {
-  return apiClient.get<AmpgenProbeResult>('/v1/system/ampgen-probe')
+export async function getRuntimeConfig(): Promise<RuntimeConfig> {
+  return apiClient.get<RuntimeConfig>('/v1/system/runtime-config')
 }

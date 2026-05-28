@@ -9,6 +9,8 @@ import {
 import { apiClient } from '@/api/client'
 import { getDashboardSummary } from '@/api/dashboard'
 import type { DashboardSummary } from '@/api/dashboard'
+import { getRuntimeConfig } from '@/api/system'
+import type { RuntimeConfig } from '@/api/system'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -22,51 +24,70 @@ interface SystemStatus {
   mic_scorer_detected: boolean
 }
 
+interface BackendCardInfo {
+  key: string
+  title: string
+  purpose: string
+  countLimit: string | number
+  speed: string
+  result: string
+  scores: string
+  icon: typeof Cpu
+  color: string
+  iconColor: string
+  badge: string
+}
+
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const BACKEND_CARDS = [
-  {
-    key: 'LOCAL_DEMO',
-    title: 'LOCAL_DEMO',
-    purpose: '流程演示',
-    countLimit: 5,
-    speed: '秒级',
-    result: 'Demo sequence only',
-    scores: 'Not computed',
-    icon: Zap,
-    color: 'bg-blue-50 border-blue-200 text-blue-700',
-    iconColor: 'text-blue-500',
-    badge: 'bg-blue-100 text-blue-700',
-  },
-  {
-    key: 'LOCAL_REAL_SMOKE',
-    title: 'LOCAL_REAL_SMOKE',
-    purpose: '本机真实 AMPGen 小规模验证',
-    countLimit: 2,
-    speed: '约 45–60 秒',
-    result: '真实 AMPGen sequence generation',
-    scores: 'Not computed',
-    icon: Cpu,
-    color: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    iconColor: 'text-emerald-500',
-    badge: 'bg-emerald-100 text-emerald-700',
-  },
-  {
-    key: 'SERVER_PRODUCTION',
-    title: 'SERVER_PRODUCTION',
-    purpose: '服务器生产计算预留',
-    countLimit: '—',
-    speed: '—',
-    result: 'Not connected / BLOCKED',
-    scores: '—',
-    icon: Server,
-    color: 'bg-gray-50 border-gray-200 text-gray-500',
-    iconColor: 'text-gray-400',
-    badge: 'bg-gray-100 text-gray-500',
-  },
-]
+function buildBackendCards(config: RuntimeConfig | null): BackendCardInfo[] {
+  const spEnabled = config?.server_production_enabled ?? false
+  const spMax = config?.server_production_max_count ?? 10
+  const spDevice = config?.server_production_device ?? 'cpu'
+  return [
+    {
+      key: 'LOCAL_DEMO',
+      title: 'LOCAL_DEMO',
+      purpose: '流程演示',
+      countLimit: 5,
+      speed: '秒级',
+      result: 'Demo sequence only',
+      scores: 'Not computed',
+      icon: Zap,
+      color: 'bg-blue-50 border-blue-200 text-blue-700',
+      iconColor: 'text-blue-500',
+      badge: 'bg-blue-100 text-blue-700',
+    },
+    {
+      key: 'LOCAL_REAL_SMOKE',
+      title: 'LOCAL_REAL_SMOKE',
+      purpose: '本机真实 AMPGen 小规模验证',
+      countLimit: 2,
+      speed: '约 45–60 秒',
+      result: '真实 AMPGen sequence generation',
+      scores: 'Not computed',
+      icon: Cpu,
+      color: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+      iconColor: 'text-emerald-500',
+      badge: 'bg-emerald-100 text-emerald-700',
+    },
+    {
+      key: 'SERVER_PRODUCTION',
+      title: 'SERVER_PRODUCTION',
+      purpose: spEnabled ? '服务器小规模 GPU 生成' : '服务器生产计算预留',
+      countLimit: spEnabled ? spMax : '—',
+      speed: spEnabled ? '约 3–10 秒' : '—',
+      result: spEnabled ? `GPU (${spDevice}) sequence generation` : 'Not connected / BLOCKED',
+      scores: 'Not computed',
+      icon: Server,
+      color: spEnabled ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-500',
+      iconColor: spEnabled ? 'text-amber-500' : 'text-gray-400',
+      badge: spEnabled ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500',
+    },
+  ]
+}
 
 const WORKFLOW_STEPS = [
   {
@@ -170,6 +191,7 @@ export default function AMPGenWorkflowPage() {
   const navigate = useNavigate()
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [dashboard, setDashboard] = useState<DashboardSummary | null>(null)
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -177,10 +199,11 @@ export default function AMPGenWorkflowPage() {
     async function load() {
       setLoading(true)
       try {
-        const [health, probe, dash] = await Promise.allSettled([
+        const [health, probe, dash, rtConfig] = await Promise.allSettled([
           apiClient.get('/health'),
           apiClient.get('/v1/system/ampgen-probe'),
           getDashboardSummary(),
+          getRuntimeConfig(),
         ])
 
         if (probe.status === 'fulfilled') {
@@ -196,6 +219,9 @@ export default function AMPGenWorkflowPage() {
 
         if (dash.status === 'fulfilled') {
           setDashboard(dash.value)
+        }
+        if (rtConfig.status === 'fulfilled') {
+          setRuntimeConfig(rtConfig.value)
         }
       } catch (e: any) {
         setError(e.message || 'Failed to load system status')
@@ -256,7 +282,7 @@ export default function AMPGenWorkflowPage() {
           Backend Modes
         </h2>
         <div className="grid grid-cols-3 gap-4">
-          {BACKEND_CARDS.map((card) => {
+          {buildBackendCards(runtimeConfig).map((card) => {
             const Icon = card.icon
             return (
               <div
@@ -291,7 +317,9 @@ export default function AMPGenWorkflowPage() {
                 </div>
                 <div className="mt-3">
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${card.badge}`}>
-                    {card.key === 'SERVER_PRODUCTION' ? 'BLOCKED' : 'ACTIVE'}
+                    {card.key === 'SERVER_PRODUCTION'
+                      ? (runtimeConfig?.server_production_enabled ? 'ACTIVE' : 'BLOCKED')
+                      : 'ACTIVE'}
                   </span>
                 </div>
               </div>
@@ -426,13 +454,39 @@ export default function AMPGenWorkflowPage() {
             {/* Server Card */}
             <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-4">
               <h3 className="text-[13px] font-semibold text-[#111827] mb-3">Server Production</h3>
-              <div className="flex items-center gap-2 text-[13px] text-gray-400">
-                <Server size={14} />
-                <span>Not connected</span>
-              </div>
-              <p className="text-[12px] text-[#9CA3AF] mt-2">
-                Server backend is reserved for future large-scale production deployment.
-              </p>
+              {runtimeConfig?.server_production_enabled ? (
+                <div className="space-y-2 text-[13px]">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <CheckCircle size={14} />
+                    <span className="font-medium">Small-scale enabled</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6B7280]">Max count</span>
+                    <span className="font-medium">{runtimeConfig.server_production_max_count}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6B7280]">Device</span>
+                    <span className="font-mono text-[#111827]">{runtimeConfig.server_production_device}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6B7280]">Artifact dir</span>
+                    <span className="font-mono text-[11px] text-[#111827] truncate max-w-[140px]">{runtimeConfig.server_artifact_dir}</span>
+                  </div>
+                  <p className="text-[11px] text-[#9CA3AF] pt-1">
+                    AMP score / MIC not computed.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-[13px] text-gray-400">
+                    <Server size={14} />
+                    <span>Not connected</span>
+                  </div>
+                  <p className="text-[12px] text-[#9CA3AF] mt-2">
+                    Server backend is reserved for future large-scale production deployment.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         )}
