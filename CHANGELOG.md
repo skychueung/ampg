@@ -1,5 +1,40 @@
 # AMPGen Agent Platform Changelog
 
+## v0.6.0-local-mvp-seal (2026-05-28)
+
+### Seal Validation
+- **pytest**: 96/96 passed in 51.39s
+- **npm build**: 0 TypeScript errors, built in 12.14s
+- **smoke tests**: 14/14 passed
+  - healthcheck.ps1 | PASS | 0.17s
+  - smoke_dashboard_real_api.ps1 | PASS | 0.23s
+  - smoke_scientific_boundary_hotfix.ps1 | PASS | 1.20s
+  - smoke_ampgen_visualizer.ps1 | PASS | 2.22s
+  - smoke_peptide_analytics.ps1 | PASS | 0.19s
+  - smoke_run_comparison.ps1 | PASS | 0.22s
+  - smoke_sequence_explorer.ps1 | PASS | 0.36s
+  - smoke_local_demo.ps1 | PASS | 2.13s
+  - smoke_local_real.ps1 | PASS | 46.09s
+  - smoke_cancel_local_real.ps1 | PASS | 5.26s
+  - smoke_export_reports.ps1 | PASS | 0.23s
+  - smoke_candidate_review.ps1 | PASS | 0.18s
+  - smoke_maintenance.ps1 | PASS | 0.65s
+  - backup_project_snapshot.ps1 | PASS | 0.23s
+- **snapshot**: ackups/snapshots/ampgen_platform_snapshot_20260528_220153.zip (0.09 MB), excludes .env, .git, 
+ode_modules, dist, model weights
+- **database**: 75 peptide candidates, 50 tasks, 50 generation runs; 0 fake amp_score/MIC
+- **scientific boundary**: verified, no violations
+
+### Documentation
+- Updated VERSION.md, CHANGELOG.md
+- Added docs/LOCAL_MVP_SEAL_v0.6.0.md
+
+### Design Notes
+- No new features added; pure validation and seal.
+- LOCAL_REAL_SMOKE still does not populate amp_score/MIC.
+- Candidate Review does not modify amp_score/MIC.
+- All exports preserve null scores as 'N/A'.
+
 ## v0.5.9-local-maintenance (2026-05-26)
 
 ### Added
@@ -41,15 +76,15 @@
   - Batch actions: multi-select + batch review
   - Shortlist exports: CSV, FASTA, synthesis order template
 - **Candidate Review API** (9 endpoints):
-  - `GET /api/v1/candidate-review/candidates` â€” filtered list with review fields
-  - `GET /api/v1/candidate-review/candidates/{id}/evidence` â€” evidence card
-  - `POST /api/v1/candidate-review/candidates/{id}/review` â€” single review update
-  - `POST /api/v1/candidate-review/batch-review` â€” batch review update
-  - `GET /api/v1/candidate-review/shortlist` â€” shortlisted candidates
-  - `GET /api/v1/candidate-review/summary` â€” review summary statistics
-  - `POST /api/v1/candidate-review/export-shortlist.csv` â€” CSV export
-  - `POST /api/v1/candidate-review/export-shortlist.fasta` â€” FASTA export
-  - `POST /api/v1/candidate-review/export-synthesis-order.csv` â€” synthesis order template
+  - `GET /api/v1/candidate-review/candidates` â€?filtered list with review fields
+  - `GET /api/v1/candidate-review/candidates/{id}/evidence` â€?evidence card
+  - `POST /api/v1/candidate-review/candidates/{id}/review` â€?single review update
+  - `POST /api/v1/candidate-review/batch-review` â€?batch review update
+  - `GET /api/v1/candidate-review/shortlist` â€?shortlisted candidates
+  - `GET /api/v1/candidate-review/summary` â€?review summary statistics
+  - `POST /api/v1/candidate-review/export-shortlist.csv` â€?CSV export
+  - `POST /api/v1/candidate-review/export-shortlist.fasta` â€?FASTA export
+  - `POST /api/v1/candidate-review/export-synthesis-order.csv` â€?synthesis order template
 - **Database fields**: `priority`, `selected_for_synthesis`, `batch_label`, `review_status`, `review_notes`, `reviewed_at`
 - **Tests**: 10 new pytest cases in `test_candidate_review.py`
 - **Smoke test**: `scripts/smoke_candidate_review.ps1`
@@ -70,11 +105,11 @@
   - Descriptive Motif Statistics: N-terminal / C-terminal position frequencies, top dipeptides, top amino acids
   - Rule-Based Representatives: greedy selection prioritizing quality + diversity
 - **Sequence Explorer API** (5 new endpoints):
-  - `GET /api/v1/sequence-explorer/overview` â€” aggregate sequence statistics
-  - `GET /api/v1/sequence-explorer/duplicates` â€” exact duplicate sequence groups
-  - `GET /api/v1/sequence-explorer/similarity?threshold=0.8&limit=100` â€” Levenshtein similarity pairs
-  - `GET /api/v1/sequence-explorer/motif-enrichment` â€” descriptive motif statistics
-  - `GET /api/v1/sequence-explorer/representatives?limit=10` â€” rule-based representative selection
+  - `GET /api/v1/sequence-explorer/overview` â€?aggregate sequence statistics
+  - `GET /api/v1/sequence-explorer/duplicates` â€?exact duplicate sequence groups
+  - `GET /api/v1/sequence-explorer/similarity?threshold=0.8&limit=100` â€?Levenshtein similarity pairs
+  - `GET /api/v1/sequence-explorer/motif-enrichment` â€?descriptive motif statistics
+  - `GET /api/v1/sequence-explorer/representatives?limit=10` â€?rule-based representative selection
 - **Cross-page navigation**: CandidateLibrary, PeptideAnalytics, RunComparison, AMPGenWorkflow all link to Sequence Explorer.
 - **Tests**: 8 new pytest cases in `test_sequence_explorer.py`
 - **Smoke test**: `scripts/smoke_sequence_explorer.ps1`
@@ -88,16 +123,16 @@
 ## v0.5.6-run-comparison (2026-05-26)
 
 ### Added
-- **Run Comparison Page** (`/run-comparison`): Side-by-side comparison of 2â€“4 generation runs
+- **Run Comparison Page** (`/run-comparison`): Side-by-side comparison of 2â€? generation runs
   - Multi-select run picker with backend, status, and count badges
   - Comparison results table: avg length, net charge, hydrophobic fraction, status counts
   - Length distribution grouped bar chart
   - Status distribution radar chart + stacked bar chart
   - Run metadata cards with per-run color coding
 - **Run-Level Analytics API** (3 new endpoints):
-  - `GET /api/v1/analytics/generation-runs-summary` â€” lightweight list of all generation runs
-  - `GET /api/v1/analytics/generation-runs/{run_id}/analytics` â€” per-run analytics (stats, AA composition, filter rules)
-  - `POST /api/v1/analytics/generation-runs/compare` â€” compare 2â€“4 runs (enforces min 2, max 4)
+  - `GET /api/v1/analytics/generation-runs-summary` â€?lightweight list of all generation runs
+  - `GET /api/v1/analytics/generation-runs/{run_id}/analytics` â€?per-run analytics (stats, AA composition, filter rules)
+  - `POST /api/v1/analytics/generation-runs/compare` â€?compare 2â€? runs (enforces min 2, max 4)
 - **Cross-page navigation**: PeptideAnalytics, AMPGenWorkflow, GenerationRunDetail all link to Run Comparison.
 - **Tests**: 7 new pytest cases in `test_analytics_run_comparison.py`
 - **Smoke test**: `scripts/smoke_run_comparison.ps1`
@@ -118,12 +153,12 @@
   - Top rule-based candidates: heuristic ranking table with rule_based_rank and rule_based_reason
   - Candidate detail drawer: click any row to open side panel with full properties
 - **Analytics API** (6 endpoints):
-  - `GET /api/v1/analytics/peptides-summary` â€” aggregated peptide statistics
-  - `GET /api/v1/analytics/property-distributions` â€” length/charge/hydrophobicity histogram bins
-  - `GET /api/v1/analytics/amino-acid-composition` â€” 20 standard amino acid frequencies
-  - `GET /api/v1/analytics/status-source-breakdown` â€” status/source/backend counts
-  - `GET /api/v1/analytics/filter-rule-pass-rate` â€” 4 physicochemical filter rules with pass/fail rates
-  - `GET /api/v1/analytics/top-candidates?limit=N` â€” rule-based heuristic ranking (not model prediction)
+  - `GET /api/v1/analytics/peptides-summary` â€?aggregated peptide statistics
+  - `GET /api/v1/analytics/property-distributions` â€?length/charge/hydrophobicity histogram bins
+  - `GET /api/v1/analytics/amino-acid-composition` â€?20 standard amino acid frequencies
+  - `GET /api/v1/analytics/status-source-breakdown` â€?status/source/backend counts
+  - `GET /api/v1/analytics/filter-rule-pass-rate` â€?4 physicochemical filter rules with pass/fail rates
+  - `GET /api/v1/analytics/top-candidates?limit=N` â€?rule-based heuristic ranking (not model prediction)
 - **Cross-page navigation**: CandidateLibrary, AMPGenWorkflow, GenerationRunDetail all link to Peptide Analytics.
 
 ### Design Notes

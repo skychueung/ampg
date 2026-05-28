@@ -1,4 +1,4 @@
-# AMPGen Agent Platform â€” Version Matrix
+# AMPGen Agent Platform â€?Version Matrix
 
 ## Current Release
 
@@ -20,14 +20,14 @@ Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
   - Cleanup Artifacts: dry-run by default, age-based deletion
   - Reset Demo Data: confirm-protected, defaults preserve LOCAL_REAL_SMOKE and review/shortlist data, auto pre-reset backup
 - **Maintenance API** (8 endpoints under `/api/v1/maintenance`):
-  - `GET /storage-summary` â€” local storage stats
-  - `POST /backup-database` â€” DB backup
-  - `POST /backup-artifacts` â€” artifacts zip
-  - `POST /create-project-snapshot` â€” full project snapshot
-  - `GET /backups` â€” list backups
-  - `POST /restore-database` â€” restore with confirm + pre-backup
-  - `POST /cleanup-artifacts` â€” dry-run or confirm cleanup
-  - `POST /reset-demo-data` â€” demo reset with safety defaults
+  - `GET /storage-summary` â€?local storage stats
+  - `POST /backup-database` â€?DB backup
+  - `POST /backup-artifacts` â€?artifacts zip
+  - `POST /create-project-snapshot` â€?full project snapshot
+  - `GET /backups` â€?list backups
+  - `POST /restore-database` â€?restore with confirm + pre-backup
+  - `POST /cleanup-artifacts` â€?dry-run or confirm cleanup
+  - `POST /reset-demo-data` â€?demo reset with safety defaults
 - **LocalMaintenancePage**: lazy-loaded React page with status bar, summary cards, backup/restore/cleanup/reset sections
 - **Scripts**: `smoke_maintenance.ps1`, `backup_project_snapshot.ps1`
 - **Tests**: 12 pytest cases in `test_maintenance.py`
@@ -45,15 +45,15 @@ Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
   - Shortlist panel: export CSV, FASTA, synthesis order template
   - Synthesis order CSV: Order_ID, Peptide_Name, Sequence, Purity, Scale, Modifications, Salt_Form, Remarks
 - **Candidate Review API** (6 endpoints under `/api/v1/candidate-review`):
-  - `GET /candidates` â€” filtered candidate list with review fields
-  - `GET /candidates/{id}/evidence` â€” rule-based evidence card
-  - `POST /candidates/{id}/review` â€” single candidate review update
-  - `POST /batch-review` â€” batch review update
-  - `GET /shortlist` â€” shortlisted / selected-for-synthesis candidates
-  - `GET /summary` â€” review summary statistics
-  - `POST /export-shortlist.csv` â€” CSV export
-  - `POST /export-shortlist.fasta` â€” FASTA export
-  - `POST /export-synthesis-order.csv` â€” synthesis order template export
+  - `GET /candidates` â€?filtered candidate list with review fields
+  - `GET /candidates/{id}/evidence` â€?rule-based evidence card
+  - `POST /candidates/{id}/review` â€?single candidate review update
+  - `POST /batch-review` â€?batch review update
+  - `GET /shortlist` â€?shortlisted / selected-for-synthesis candidates
+  - `GET /summary` â€?review summary statistics
+  - `POST /export-shortlist.csv` â€?CSV export
+  - `POST /export-shortlist.fasta` â€?FASTA export
+  - `POST /export-synthesis-order.csv` â€?synthesis order template export
 - **Database**: Added `priority`, `selected_for_synthesis`, `batch_label`, `review_status`, `review_notes`, `reviewed_at` to `peptide_candidates`.
 - **Cross-page navigation**: CandidateLibrary, PeptideAnalytics, SequenceExplorer, RunComparison, GenerationRunDetail all link to Review Workbench.
 - **Scientific boundary maintained**: Evidence cards labeled as "rule-based review only." Synthesis order remarks: "Computational candidate; not experimentally validated."
@@ -63,21 +63,21 @@ Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
 - **Peptide Sequence Explorer** (`/sequence-explorer`): Deep sequence-level analysis of generated peptides.
   - Overview cards: total/unique sequences, duplicate groups, avg/min/max length, source counts
   - Duplicate Groups: exact sequence duplicates with source/status breakdown
-  - Similarity Explorer: normalized Levenshtein similarity pairs with adjustable threshold (0.0â€“1.0) and limit
+  - Similarity Explorer: normalized Levenshtein similarity pairs with adjustable threshold (0.0â€?.0) and limit
   - Descriptive Motif Statistics: N-terminal / C-terminal position frequencies, top dipeptides, top amino acids
   - Rule-Based Representatives: greedy selection by physicochemical quality + sequence diversity
 - **Sequence Explorer API** (5 endpoints under `/api/v1/sequence-explorer`):
-  - `GET /overview` â€” aggregate sequence statistics
-  - `GET /duplicates` â€” exact duplicate sequence groups
-  - `GET /similarity` â€” normalized Levenshtein similarity pairs (threshold, limit)
-  - `GET /motif-enrichment` â€” descriptive N/C-terminal, dipeptide, AA frequencies
-  - `GET /representatives` â€” rule-based representative peptide selection
+  - `GET /overview` â€?aggregate sequence statistics
+  - `GET /duplicates` â€?exact duplicate sequence groups
+  - `GET /similarity` â€?normalized Levenshtein similarity pairs (threshold, limit)
+  - `GET /motif-enrichment` â€?descriptive N/C-terminal, dipeptide, AA frequencies
+  - `GET /representatives` â€?rule-based representative peptide selection
 - **Cross-page navigation**: CandidateLibrary, PeptideAnalytics, RunComparison, AMPGenWorkflow all link to Sequence Explorer.
 - **Scientific boundary maintained**: Similarity explicitly labeled as "descriptive only, not functional equivalence." Motif statistics labeled as "descriptive only, not functional validation." Representatives labeled as "rule-based only, not a model prediction."
 
 ## v0.5.6 Highlights
 
-- **Run Comparison** (`/run-comparison`): Side-by-side comparison of 2â€“4 generation runs.
+- **Run Comparison** (`/run-comparison`): Side-by-side comparison of 2â€? generation runs.
   - Multi-select run picker with backend/status badges
   - Comparison table: avg length, charge, hydrophobic fraction, candidate/filtered/rejected counts
   - Length distribution grouped bar chart (recharts)
@@ -85,9 +85,9 @@ Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
   - Status stacked bar chart
   - Run metadata cards with color coding
 - **Run-Level Analytics API** (3 new endpoints under `/api/v1/analytics`):
-  - `GET /generation-runs-summary` â€” lightweight list of all runs
-  - `GET /generation-runs/{run_id}/analytics` â€” per-run stats, AA composition, filter rules
-  - `POST /generation-runs/compare` â€” compare 2â€“4 runs with aggregated metrics
+  - `GET /generation-runs-summary` â€?lightweight list of all runs
+  - `GET /generation-runs/{run_id}/analytics` â€?per-run stats, AA composition, filter rules
+  - `POST /generation-runs/compare` â€?compare 2â€? runs with aggregated metrics
 - **Cross-page navigation**: PeptideAnalytics, AMPGenWorkflow, GenerationRunDetail all link to Run Comparison.
 - **Scientific boundary maintained**: Comparison is explicitly labeled as "procedural analysis only, not antimicrobial activity benchmarking".
 
@@ -102,12 +102,12 @@ Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
   - Top rule-based candidates: heuristic ranking, NOT model prediction
   - Candidate detail drawer: click any candidate to view full properties
 - **Analytics API** (6 endpoints under `/api/v1/analytics`):
-  - `GET /peptides-summary` â€” aggregated statistics
-  - `GET /property-distributions` â€” binned histograms
-  - `GET /amino-acid-composition` â€” 20 AA frequency
-  - `GET /status-source-breakdown` â€” status/source/backend counts
-  - `GET /filter-rule-pass-rate` â€” 4 filter rules with pass/fail counts
-  - `GET /top-candidates?limit=N` â€” rule-based heuristic ranking
+  - `GET /peptides-summary` â€?aggregated statistics
+  - `GET /property-distributions` â€?binned histograms
+  - `GET /amino-acid-composition` â€?20 AA frequency
+  - `GET /status-source-breakdown` â€?status/source/backend counts
+  - `GET /filter-rule-pass-rate` â€?4 filter rules with pass/fail counts
+  - `GET /top-candidates?limit=N` â€?rule-based heuristic ranking
 - **Cross-page navigation**: CandidateLibrary, AMPGenWorkflow, GenerationRunDetail all link to Peptide Analytics.
 - **Scientific boundary maintained**: All scores remain `Not computed`. Rule-based ranking explicitly labeled as heuristic only.
 
@@ -115,21 +115,21 @@ Previous: v0.5.8-candidate-review-workbench (2026-05-26, 1b08feb)
 
 | Version | Capability | Status |
 |---------|-----------|--------|
-| v0.1 | Frontend demo (mock data) | âœ… |
-| v0.2 | Backend + local real smoke (sync blocking) | âœ… |
-| v0.3 | Frontend real API integration | âœ… |
-| v0.3 | Async task execution (threading.Thread) | âœ… |
-| v0.3 | Frontend polling (3s interval) | âœ… |
-| v0.4 | Safe task cancellation | âœ… |
-| v0.5 | Report Export Center (real API) | âœ… |
-| v0.5.1 | Remove fake demo amp_score / MIC values | âœ… |
-| v0.5.2 | Dashboard + ReportExport + PeptideDetail real API | âœ… |
-| v0.5.3 | Frontend code splitting (1333 KB â†’ 244 KB main bundle) | âœ… |
-| v0.5.4 | AMPGen Workflow Visualizer + Run Detail + Artifacts API | âœ… |
-| v0.5.5 | Peptide Analytics Dashboard + 6 analytics APIs | âœ… |
-| v0.5.6 | Generation Run Comparison + Run-Level Analytics | âœ… |
-| v0.5.7 | Peptide Sequence Explorer (duplicates, similarity, motif, representatives) | âœ… |
-| v0.5.8 | Candidate Review Workbench (evidence cards, shortlist, batch review, synthesis export) | âœ… |
+| v0.1 | Frontend demo (mock data) | âœ?|
+| v0.2 | Backend + local real smoke (sync blocking) | âœ?|
+| v0.3 | Frontend real API integration | âœ?|
+| v0.3 | Async task execution (threading.Thread) | âœ?|
+| v0.3 | Frontend polling (3s interval) | âœ?|
+| v0.4 | Safe task cancellation | âœ?|
+| v0.5 | Report Export Center (real API) | âœ?|
+| v0.5.1 | Remove fake demo amp_score / MIC values | âœ?|
+| v0.5.2 | Dashboard + ReportExport + PeptideDetail real API | âœ?|
+| v0.5.3 | Frontend code splitting (1333 KB â†?244 KB main bundle) | âœ?|
+| v0.5.4 | AMPGen Workflow Visualizer + Run Detail + Artifacts API | âœ?|
+| v0.5.5 | Peptide Analytics Dashboard + 6 analytics APIs | âœ?|
+| v0.5.6 | Generation Run Comparison + Run-Level Analytics | âœ?|
+| v0.5.7 | Peptide Sequence Explorer (duplicates, similarity, motif, representatives) | âœ?|
+| v0.5.8 | Candidate Review Workbench (evidence cards, shortlist, batch review, synthesis export) | âœ?|
 
 ## Upcoming (Not in v0.5.5)
 
