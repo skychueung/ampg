@@ -1,3 +1,7 @@
+> 长期项目记忆主源位于：`D:\ai\product\obsidian-vaults\XH-Research-Agent-Vault\本地记忆\AMPGen可视化平台`
+> 
+> 本文件作为工程文档保留，记忆更新以 Obsidian 本地记忆目录为准。
+
 # AMPGen Agent Platform — Runbook
 
 ## 1. 如何启动
