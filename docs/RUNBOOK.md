@@ -501,3 +501,38 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:8001/api/v1/maintenance/backups' -Metho
 7. Cleanup Artifacts 默认 Dry Run，不删除文件
 8. Reset Demo Data 必须输入 RESET DEMO，默认不删除 LOCAL_REAL_SMOKE 和 review 数据
 9. 后端不可用时显示明确提示
+
+---
+
+## Local Agent Collaboration
+
+### 分工概览
+
+| Agent | 职责 | 主要工作 |
+|-------|------|----------|
+| **KimiCode** | 主施工 | 修改 FastAPI 后端、React 前端；新增 pytest / smoke 脚本；更新文档；生成阶段报告。 |
+| **DeepSeek-TUI** | 执行验证 | 运行 pytest、npm build；检查 FastAPI 启动与接口返回；检查服务器日志与 smoke 脚本；确认不破坏已有功能。 |
+| **DeepSeek-Reasonix** | 推理审查与挑错 | 审查 ARIS-Lite 工作流逻辑闭环；检查五角色职责；检查 claim ledger 证据支持；判定 PASS / REVISE / BLOCKED / NEEDS_SERVER 是否合理。 |
+| **Hermes** | 总控汇总 | 汇总施工、测试、审查结果；生成最终验收报告；判断是否允许进入下一阶段。 |
+| **stamp218** | 真实计算执行环境 | 运行 SERVER_PRODUCTION 与批量 AMPGen 生成；保存 server-artifacts；执行真实 GPU 计算；后续接入 XGBoost / MIC / ESM。 |
+
+### 计算边界
+
+- 本地电脑只负责代码开发、轻量 mock 测试、npm build、文档和报告；
+- 本地不运行真实 AMPGen 生成；
+- 本地不运行 SERVER_PRODUCTION；
+- 本地不做 GPU 计算；
+- 真实生成任务必须在服务器 stamp218 执行。
+
+### 服务器端口规则
+
+| 服务 | Backend | Frontend |
+|------|---------|----------|
+| AMPGen | 18601 | 18600 |
+| STAMP | 8001 | 8080 |
+
+- AMPGen 端口固定为 18601/18600，不得占用 STAMP 的 8001/8080。
+
+---
+
+*最后更新：2026-05-29*
