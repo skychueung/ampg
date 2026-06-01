@@ -8,7 +8,8 @@ Constraints:
 """
 import csv
 import subprocess
-import sys
+import os
+
 import time
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +27,7 @@ from app.models.task import Task
 from app.models.generation_run import GenerationRun
 from app.models.peptide import PeptideCandidate
 from app.services.physicochemical import apply_amp_filter, check_invalid_aa
+from app.config import AMPGEN_PYTHON_EXECUTABLE
 
 AMPGEN_GENERATOR_DIR = AMPGEN_ROOT / "AMP_generator"
 
@@ -83,7 +85,7 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
     if mode == "Sequence-based":
         script = AMPGEN_GENERATOR_DIR / "unconditional_generation.py"
         cmd = [
-            sys.executable,
+            AMPGEN_PYTHON_EXECUTABLE,
             str(script),
             "--total_sequences", str(run.count),
             "--batch_size", "1",
@@ -94,7 +96,7 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
         script = AMPGEN_GENERATOR_DIR / "conditional_generation_msa.py"
         msa_dir = _resolve_msa_directory()
         cmd = [
-            sys.executable,
+            AMPGEN_PYTHON_EXECUTABLE,
             str(script),
             "--directory_path", str(msa_dir),
             "--output_csv_file", str(output_csv),
@@ -105,7 +107,7 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
     elif mode == "MSA-conditional":
         script = AMPGEN_GENERATOR_DIR / "unconditional_generation_msa.py"
         cmd = [
-            sys.executable,
+            AMPGEN_PYTHON_EXECUTABLE,
             str(script),
             "--total_sequences", str(run.count),
             "--batch_size", "1",

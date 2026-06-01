@@ -25,3 +25,8 @@ SERVER_BATCH_CHUNK_SIZE = int(os.getenv("SERVER_BATCH_CHUNK_SIZE", "10"))
 SERVER_BATCH_MAX_CONCURRENCY = int(os.getenv("SERVER_BATCH_MAX_CONCURRENCY", "1"))
 
 AMPGEN_LOCAL_REAL_SMOKE_DEVICE = os.getenv('AMPGEN_LOCAL_REAL_SMOKE_DEVICE', 'cpu')
+
+# Python executable for invoking AMPGen original model scripts.
+# Default to sys.executable for backward compatibility.
+import sys
+AMPGEN_PYTHON_EXECUTABLE = os.getenv("AMPGEN_PYTHON_EXECUTABLE", sys.executable)
