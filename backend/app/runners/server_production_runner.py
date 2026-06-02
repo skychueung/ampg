@@ -7,9 +7,11 @@ Constraints:
 - Source tag: "server_production"
 """
 import csv
+import json
 import subprocess
 import os
 import sys
+import tempfile
 
 import time
 from datetime import datetime
@@ -32,6 +34,12 @@ from app.config import AMPGEN_PYTHON_EXECUTABLE
 
 AMPGEN_GENERATOR_DIR = AMPGEN_ROOT / "AMP_generator"
 
+# P6E XGBoost Discriminator paths
+P6E_SCORER_VENV_PYTHON = Path("/home/xh/kxc/ampg可视化/.venv-p6e-scorer/bin/python")
+P6E_SCORER_CLI = Path("/home/xh/kxc/ampg可视化/p6e_discriminator_export_work/p6e_score_cli.py")
+P6E_SCORER_MODEL = Path("/mnt/sdb/ampg可视化/scorer-models/p6e_xgboost_amp_discriminator/xgb_amp_discriminator_20260602_102905.joblib")
+P6E_SCORER_ENABLED = P6E_SCORER_VENV_PYTHON.exists() and P6E_SCORER_CLI.exists() and P6E_SCORER_MODEL.exists()
+
 
 def _resolve_msa_directory() -> Path:
     # Prefer example MSA directory if it contains valid .a3m files
@@ -45,6 +53,40 @@ def _resolve_msa_directory() -> Path:
             if d.is_dir() and any(d.glob("*.a3m")):
                 return d
     return example_dir
+
+
+def _score_sequences_with_p6e(sequences: list) -> list:
+    """Run P6E XGBoost discriminator on sequences via subprocess. Returns list of scores or Nones."""
+    if not P6E_SCORER_ENABLED:
+        return [None] * len(sequences)
+    if not sequences:
+        return []
+    
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "seqs.json"
+            output_path = Path(tmpdir) / "scores.json"
+            with open(input_path, "w") as f:
+                json.dump(sequences, f)
+            
+            cmd = [
+                str(P6E_SCORER_VENV_PYTHON),
+                str(P6E_SCORER_CLI),
+                "--input", str(input_path),
+                "--model", str(P6E_SCORER_MODEL),
+                "--output", str(output_path),
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            if result.returncode != 0:
+                print(f"[P6E Scorer] Error: {result.stderr}")
+                return [None] * len(sequences)
+            
+            with open(output_path) as f:
+                scores = json.load(f)
+            return scores
+    except Exception as e:
+        print(f"[P6E Scorer] Exception: {e}")
+        return [None] * len(sequences)
 
 
 def run_server_production(db: Session, run: GenerationRun) -> dict:
@@ -223,9 +265,12 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
             f.write(f">AMP_{idx}|run={run.id}|mode={mode}|disclaimer={DISCLAIMER}\n")
             f.write(f"{seq}\n")
 
+    # Run P6E discriminator scoring
+    amp_scores = _score_sequences_with_p6e(sequences)
+
     # Insert peptides into DB
     generated_count = 0
-    for seq in sequences:
+    for idx, seq in enumerate(sequences):
         filter_result = apply_amp_filter(seq)
         if filter_result["passed"]:
             status = "CANDIDATE"
@@ -241,7 +286,7 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
             hydrophobic_fraction=filter_result["hydrophobic_fraction"],
             hydrophobicity=filter_result["hydrophobicity"],
             valid_aa=filter_result["valid_aa"],
-            amp_score=None,
+            amp_score=amp_scores[idx] if idx < len(amp_scores) else None,
             mic_ecoli=None,
             mic_saureus=None,
             toxicity_risk=None,
