@@ -8,6 +8,7 @@ Constraints:
 import csv
 import subprocess
 import os
+import sys
 
 import time
 from datetime import datetime
@@ -114,19 +115,34 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
     proc = None
     try:
         with open(stdout_log, "w", encoding="utf-8") as out_f, open(stderr_log, "w", encoding="utf-8") as err_f:
+            popen_kwargs = {}
+            if sys.platform != "win32":
+                popen_kwargs["start_new_session"] = True
             proc = subprocess.Popen(
                 cmd,
                 stdout=out_f,
                 stderr=err_f,
                 cwd=str(AMPGEN_ROOT),
+                **popen_kwargs,
             )
             if task:
                 task.process_pid = proc.pid
                 db.commit()
 
             # Poll loop: check cancellation every 1s
+            max_polls = 600  # 600 seconds = 10 minutes
+            polls = 0
+            returncode = None
             while proc.poll() is None:
                 time.sleep(1)
+                polls += 1
+                if polls >= max_polls:
+                    proc.kill()
+                    proc.wait()
+                    with open(stderr_log, "a", encoding="utf-8") as f:
+                        f.write("\n[ERROR] Subprocess poll timeout after 600s\n")
+                    returncode = -1
+                    break
                 if task:
                     db.refresh(task)
                     if task.cancel_requested:
@@ -155,7 +171,8 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
                     "artifact_dir": str(artifact_subdir),
                 }
 
-            returncode = proc.returncode
+            if returncode is None:
+                returncode = proc.returncode
 
     except subprocess.TimeoutExpired:
         returncode = -1
