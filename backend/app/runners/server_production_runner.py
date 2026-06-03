@@ -40,6 +40,12 @@ P6E_SCORER_CLI = Path("/home/xh/kxc/ampg可视化/p6e_discriminator_export_work/
 P6E_SCORER_MODEL = Path("/mnt/sdb/ampg可视化/scorer-models/p6e_xgboost_amp_discriminator/xgb_amp_discriminator_20260602_102905.joblib")
 P6E_SCORER_ENABLED = P6E_SCORER_VENV_PYTHON.exists() and P6E_SCORER_CLI.exists() and P6E_SCORER_MODEL.exists()
 
+# P6F S. aureus MIC baseline scorer paths
+P6F_SCORER_VENV_PYTHON = Path("/home/xh/kxc/ampg可视化/.venv-p6f-mic/bin/python")
+P6F_SCORER_CLI = Path("/home/xh/kxc/ampg可视化/backend/app/scorers/p6f_score_cli.py")
+P6F_SCORER_MODEL = Path("/mnt/sdb/ampg可视化/scorer-models/p6f_mic_saureus_regressor/xgb_mic_saureus_20260603_210751.joblib")
+P6F_SCORER_ENABLED = P6F_SCORER_VENV_PYTHON.exists() and P6F_SCORER_CLI.exists() and P6F_SCORER_MODEL.exists()
+
 
 def _resolve_msa_directory() -> Path:
     # Prefer example MSA directory if it contains valid .a3m files
@@ -86,6 +92,41 @@ def _score_sequences_with_p6e(sequences: list) -> list:
             return scores
     except Exception as e:
         print(f"[P6E Scorer] Exception: {e}")
+        return [None] * len(sequences)
+
+
+def _score_sequences_with_p6f(sequences: list) -> list:
+    """Run P6F S. aureus MIC baseline scorer on sequences via subprocess.
+    Returns list of dicts or Nones on failure."""
+    if not P6F_SCORER_ENABLED:
+        return [None] * len(sequences)
+    if not sequences:
+        return []
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "seqs.json"
+            output_path = Path(tmpdir) / "mic.json"
+            with open(input_path, "w") as f:
+                json.dump(sequences, f)
+
+            cmd = [
+                str(P6F_SCORER_VENV_PYTHON),
+                str(P6F_SCORER_CLI),
+                "--input", str(input_path),
+                "--model", str(P6F_SCORER_MODEL),
+                "--metadata", str(P6F_SCORER_MODEL.with_suffix(".metadata.json")),
+                "--output", str(output_path),
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            if result.returncode != 0:
+                print(f"[P6F Scorer] Error: {result.stderr}")
+                return [None] * len(sequences)
+
+            with open(output_path) as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"[P6F Scorer] Exception: {e}")
         return [None] * len(sequences)
 
 
@@ -268,6 +309,9 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
     # Run P6E discriminator scoring
     amp_scores = _score_sequences_with_p6e(sequences)
 
+    # Run P6F S. aureus MIC scoring
+    mic_scores = _score_sequences_with_p6f(sequences)
+
     # Insert peptides into DB
     generated_count = 0
     for idx, seq in enumerate(sequences):
@@ -288,7 +332,11 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
             valid_aa=filter_result["valid_aa"],
             amp_score=amp_scores[idx] if idx < len(amp_scores) else None,
             mic_ecoli=None,
-            mic_saureus=None,
+            mic_saureus=(
+                mic_scores[idx]["mic_saureus_uM_pred"]
+                if (idx < len(mic_scores) and mic_scores[idx])
+                else None
+            ),
             toxicity_risk=None,
             hemolysis_risk=None,
             status=status,
