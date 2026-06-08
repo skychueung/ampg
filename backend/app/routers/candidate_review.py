@@ -2,7 +2,10 @@
 
 All data from real SQLite. No demo data, no fake scores.
 """
+import csv
+import glob
 from io import StringIO
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -20,8 +23,10 @@ from app.schemas.candidate_review import (
     BatchReviewPayload,
     BatchReviewOut,
     ReviewSummaryOut,
+    P6FShortlistItem,
+    P6FShortlistResponse,
 )
-from app.config import DISCLAIMER
+from app.config import DISCLAIMER, AMPGEN_VISUALIZATION_ROOT
 
 router = APIRouter(prefix="/candidate-review")
 
@@ -356,4 +361,115 @@ def export_synthesis_order_csv(db: Session = Depends(get_db)):
         iter([output.getvalue()]),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=synthesis_order.csv"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# P6F Combined Shortlist (read-only CSV)
+# ---------------------------------------------------------------------------
+
+P6F_SHORTLIST_TYPE_MAP = {
+    "low_mic_top100": "p6f_low_mic_top100_*.csv",
+    "low_mic_top50": "p6f_low_mic_top50_*.csv",
+    "low_mic_top20": "p6f_low_mic_top20_*.csv",
+    "high_amp_top100": "p6f_high_amp_top100_*.csv",
+    "high_amp_top50": "p6f_high_amp_top50_*.csv",
+    "high_amp_top20": "p6f_high_amp_top20_*.csv",
+    "combined_top100": "p6f_combined_top100_*.csv",
+    "combined_top50": "p6f_combined_top50_*.csv",
+    "combined_top20": "p6f_combined_top20_*.csv",
+    "representative50": "p6f_representative50_combined_*.csv",
+}
+
+
+def _find_latest_csv(pattern: str) -> Optional[Path]:
+    base = Path(AMPGEN_VISUALIZATION_ROOT) / "reports" / "p6f" / "combined_shortlist_1000_1000"
+    files = list(base.glob(pattern))
+    if not files:
+        return None
+    # Sort by modification time descending
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return files[0]
+
+
+def _safe_float(val: Optional[str]) -> Optional[float]:
+    if val is None or val.strip() == "":
+        return None
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_int(val: Optional[str]) -> Optional[int]:
+    if val is None or val.strip() == "":
+        return None
+    try:
+        return int(float(val))
+    except (ValueError, TypeError):
+        return None
+
+
+@router.get("/p6f-shortlist", response_model=P6FShortlistResponse)
+def get_p6f_shortlist(
+    type: str = Query("combined_top100", description="Shortlist type"),
+):
+    """Return P6F combined shortlist from the latest generated CSV.
+
+    This endpoint is read-only and does not run any generation or scoring.
+    """
+    if type not in P6F_SHORTLIST_TYPE_MAP:
+        raise HTTPException(status_code=400, detail=f"Invalid type. Allowed: {list(P6F_SHORTLIST_TYPE_MAP.keys())}")
+
+    pattern = P6F_SHORTLIST_TYPE_MAP[type]
+    csv_path = _find_latest_csv(pattern)
+
+    if csv_path is None:
+        return P6FShortlistResponse(
+            type=type,
+            count=0,
+            items=[],
+            source_label="",
+            disclaimer="Shortlist file not found. Please generate the combined shortlist first.",
+        )
+
+    items: list[P6FShortlistItem] = []
+    with csv_path.open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for idx, row in enumerate(reader, start=1):
+            mic_val = row.get("mic_saureus_uM") or row.get("mic_saureus")
+            mic_ecoli_val = row.get("mic_ecoli")
+            items.append(
+                P6FShortlistItem(
+                    rank=idx,
+                    sequence=row.get("sequence", "").strip().upper(),
+                    length=_safe_int(row.get("length")) or 0,
+                    amp_score=_safe_float(row.get("amp_score")),
+                    amp_like=_safe_int(row.get("amp_like")),
+                    mic_saureus=_safe_float(mic_val),
+                    mic_saureus_logmic=_safe_float(row.get("mic_saureus_logmic_pred_audit")),
+                    mic_ecoli=mic_ecoli_val if mic_ecoli_val else None,
+                    combined_rank_score=_safe_float(row.get("combined_rank_score")),
+                    net_charge_approx=_safe_float(row.get("net_charge_approx")),
+                    hydrophobic_fraction=_safe_float(row.get("hydrophobic_fraction")),
+                    run_id=row.get("run_id") or None,
+                    batch_id=row.get("batch_id") or None,
+                    peptide_id=row.get("peptide_id") or None,
+                    source_group=row.get("source_group") or None,
+                    source=row.get("source") or None,
+                )
+            )
+
+    return P6FShortlistResponse(
+        type=type,
+        count=len(items),
+        items=items,
+        source_label=str(csv_path.name),
+        disclaimer=(
+            "This shortlist is based on computational predictions only. "
+            "amp_score comes from an XGBoost AMP discriminator; mic_saureus comes from an XGBoost baseline MIC regressor. "
+            "Neither constitutes experimental validation of antimicrobial activity, toxicity, or hemolysis. "
+            "mic_ecoli remains null because no E. coli model is available. "
+            "Wet-lab validation is required before any therapeutic claims can be made."
+        ),
     )

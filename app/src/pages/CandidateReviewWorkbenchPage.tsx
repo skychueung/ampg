@@ -17,8 +17,10 @@ import {
   exportShortlistCsv,
   exportShortlistFasta,
   exportSynthesisOrderCsv,
+  getP6FShortlist,
+  exportP6FShortlistCsv,
 } from '@/api/candidateReview'
-import type { CandidateEvidence, ReviewSummary } from '@/api/candidateReview'
+import type { CandidateEvidence, ReviewSummary, P6FShortlistItem } from '@/api/candidateReview'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -102,6 +104,18 @@ export default function CandidateReviewWorkbenchPage() {
   const [loadingCandidates, setLoadingCandidates] = useState(true)
   const [loadingShortlist, setLoadingShortlist] = useState(true)
 
+  /* ---------------- P6F Combined Shortlist state ---------------- */
+  const [p6fType, setP6fType] = useState('combined_top100')
+  const [p6fData, setP6fData] = useState<P6FShortlistItem[]>([])
+  const [p6fLoading, setP6fLoading] = useState(false)
+  const [p6fSortKey, setP6fSortKey] = useState<string>('rank')
+  const [p6fSortDir, setP6fSortDir] = useState<'asc' | 'desc'>('asc')
+  const [p6fAmpLikeOnly, setP6fAmpLikeOnly] = useState(false)
+  const [p6fMaxMic, setP6fMaxMic] = useState('')
+  const [p6fMinLength, setP6fMinLength] = useState('')
+  const [p6fMaxLength, setP6fMaxLength] = useState('')
+  const [p6fDisclaimer, setP6fDisclaimer] = useState('')
+
   useEffect(() => { loadSummary() }, [])
   useEffect(() => { loadShortlist() }, [])
   useEffect(() => { loadCandidates() }, [])
@@ -115,6 +129,49 @@ export default function CandidateReviewWorkbenchPage() {
     setLoadingShortlist(true)
     try { const s = await getShortlist(); setShortlist(s) } catch {} finally { setLoadingShortlist(false) }
   }
+
+  async function loadP6F() {
+    setP6fLoading(true)
+    try {
+      const res = await getP6FShortlist(p6fType)
+      setP6fData(res.items)
+      setP6fDisclaimer(res.disclaimer)
+    } catch {
+      setP6fData([])
+      setP6fDisclaimer('')
+    } finally {
+      setP6fLoading(false)
+    }
+  }
+
+  useEffect(() => { loadP6F() }, [p6fType])
+
+  const handleP6fSort = (key: string) => {
+    if (p6fSortKey === key) {
+      setP6fSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setP6fSortKey(key)
+      setP6fSortDir(key === 'mic_saureus' || key === 'length' ? 'asc' : 'desc')
+    }
+  }
+
+  const sortedP6f = [...p6fData].sort((a, b) => {
+    const aVal = (a as any)[p6fSortKey]
+    const bVal = (b as any)[p6fSortKey]
+    if (aVal == null && bVal == null) return 0
+    if (aVal == null) return 1
+    if (bVal == null) return -1
+    const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+    return p6fSortDir === 'asc' ? cmp : -cmp
+  })
+
+  const filteredP6f = sortedP6f.filter((item) => {
+    if (p6fAmpLikeOnly && !item.amp_like) return false
+    if (p6fMaxMic !== '' && item.mic_saureus != null && item.mic_saureus > parseFloat(p6fMaxMic)) return false
+    if (p6fMinLength !== '' && item.length < parseInt(p6fMinLength)) return false
+    if (p6fMaxLength !== '' && item.length > parseInt(p6fMaxLength)) return false
+    return true
+  })
 
   async function loadCandidates() {
     setLoadingCandidates(true)
@@ -213,8 +270,9 @@ export default function CandidateReviewWorkbenchPage() {
           { text: 'Local Workstation Mode', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
           { text: 'Rule-based review only', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
           { text: 'Computational prediction only', bg: 'bg-gray-50 text-gray-500 border-gray-200' },
-          { text: 'AMP score: Not computed', bg: 'bg-gray-50 text-gray-500 border-gray-200' },
-          { text: 'MIC: Not computed', bg: 'bg-gray-50 text-gray-500 border-gray-200' },
+          { text: 'AMP score: P6E XGBoost', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { text: 'MIC: P6F S. aureus baseline', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { text: 'mic_ecoli: null (no model)', bg: 'bg-gray-50 text-gray-500 border-gray-200' },
         ].map((b) => (
           <span key={b.text} className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium border ${b.bg}`}>{b.text}</span>
         ))}
@@ -440,6 +498,183 @@ export default function CandidateReviewWorkbenchPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      {/* P6F Combined Shortlist */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.23 }}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-[6px] bg-[#F0FDFA] flex items-center justify-center">
+            <BarChart3 size={16} className="text-[#14B8A6]" />
+          </div>
+          <div>
+            <h2 className="text-[16px] font-semibold text-[#111827]">P6F Combined Shortlist</h2>
+            <p className="text-[12px] text-[#6B7280]">Browse ranked candidates from the 1000/1000 scored generation.</p>
+          </div>
+        </div>
+
+        {/* P6F Scientific Boundary */}
+        <div className="p-3 rounded-[8px] bg-[#FEF2F2] border border-[#FECACA] flex items-start gap-3 mb-3">
+          <AlertTriangle size={14} className="text-[#DC2626] mt-0.5 flex-shrink-0" />
+          <p className="text-[12px] text-[#991B1B]">
+            amp_score and mic_saureus are computational predictions only. They do not represent experimental validation.
+            mic_ecoli, toxicity, and hemolysis are not computed or remain null. Wet-lab validation is required before any therapeutic claims.
+          </p>
+        </div>
+
+        {/* P6F Controls */}
+        <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-4 mb-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="text-[11px] text-[#6B7280] block mb-1">Shortlist Type</label>
+              <select
+                value={p6fType}
+                onChange={(e) => setP6fType(e.target.value)}
+                className="px-2 py-1.5 border border-[#E5E7EB] rounded-[6px] text-[13px] bg-white"
+              >
+                <option value="combined_top100">Combined Top 100</option>
+                <option value="combined_top50">Combined Top 50</option>
+                <option value="combined_top20">Combined Top 20</option>
+                <option value="low_mic_top100">Low-MIC Top 100</option>
+                <option value="low_mic_top50">Low-MIC Top 50</option>
+                <option value="low_mic_top20">Low-MIC Top 20</option>
+                <option value="high_amp_top100">High-AMP Top 100</option>
+                <option value="high_amp_top50">High-AMP Top 50</option>
+                <option value="high_amp_top20">High-AMP Top 20</option>
+                <option value="representative50">Representative 50</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] text-[#6B7280] block mb-1">Max MIC (uM)</label>
+              <input
+                type="number"
+                value={p6fMaxMic}
+                onChange={(e) => setP6fMaxMic(e.target.value)}
+                placeholder="e.g. 5000"
+                className="px-2 py-1.5 border border-[#E5E7EB] rounded-[6px] text-[13px] w-[100px]"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-[#6B7280] block mb-1">Min Length</label>
+              <input
+                type="number"
+                value={p6fMinLength}
+                onChange={(e) => setP6fMinLength(e.target.value)}
+                placeholder="15"
+                className="px-2 py-1.5 border border-[#E5E7EB] rounded-[6px] text-[13px] w-[70px]"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-[#6B7280] block mb-1">Max Length</label>
+              <input
+                type="number"
+                value={p6fMaxLength}
+                onChange={(e) => setP6fMaxLength(e.target.value)}
+                placeholder="35"
+                className="px-2 py-1.5 border border-[#E5E7EB] rounded-[6px] text-[13px] w-[70px]"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-[13px] text-[#374151]">
+              <input
+                type="checkbox"
+                checked={p6fAmpLikeOnly}
+                onChange={(e) => setP6fAmpLikeOnly(e.target.checked)}
+                className="rounded"
+              />
+              AMP-like only (score &ge; 0.5)
+            </label>
+            <button
+              onClick={() => exportP6FShortlistCsv(filteredP6f, `${p6fType}.csv`)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#14B8A6] text-white text-[12px] font-medium rounded-[6px] hover:bg-[#0D9488] transition-colors ml-auto"
+            >
+              <FileDown size={12} /> Download CSV
+            </button>
+          </div>
+        </div>
+
+        {/* P6F Table */}
+        {p6fLoading ? (
+          <LoadingCard />
+        ) : filteredP6f.length === 0 ? (
+          <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6 text-[13px] text-[#6B7280]">
+            No shortlist data found. The report may not have been generated yet, or filters are too strict.
+          </div>
+        ) : (
+          <div className="bg-white border border-[#E5E7EB] rounded-[8px] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[12px] font-medium text-[#6B7280] uppercase tracking-[0.05em]">
+                    {[
+                      { key: 'rank', label: 'Rank' },
+                      { key: 'sequence', label: 'Sequence' },
+                      { key: 'length', label: 'Len' },
+                      { key: 'amp_score', label: 'AMP Score' },
+                      { key: 'mic_saureus', label: 'MIC S. aureus (uM)' },
+                      { key: 'mic_ecoli', label: 'MIC E. coli' },
+                      { key: 'combined_rank_score', label: 'Combined' },
+                      { key: 'net_charge_approx', label: 'Charge' },
+                      { key: 'hydrophobic_fraction', label: 'Hydro' },
+                      { key: 'source_group', label: 'Source' },
+                    ].map((col) => (
+                      <th
+                        key={col.key}
+                        className="text-left px-3 py-2.5 cursor-pointer select-none hover:text-[#111827]"
+                        onClick={() => handleP6fSort(col.key)}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          {col.label}
+                          {p6fSortKey === col.key && (
+                            <span className="text-[10px]">{p6fSortDir === 'asc' ? '▲' : '▼'}</span>
+                          )}
+                        </span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredP6f.map((item) => (
+                    <tr key={item.rank} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                      <td className="px-3 py-2 text-[#111827] font-medium">{item.rank}</td>
+                      <td className="px-3 py-2 font-mono text-[#14B8A6]">{item.sequence}</td>
+                      <td className="px-3 py-2">{item.length}</td>
+                      <td className="px-3 py-2">
+                        {item.amp_score != null ? (
+                          <span className={item.amp_score >= 0.5 ? 'text-emerald-600 font-medium' : 'text-[#6B7280]'}>
+                            {item.amp_score.toFixed(4)}
+                          </span>
+                        ) : (
+                          <span className="text-[#9CA3AF]">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        {item.mic_saureus != null ? item.mic_saureus.toFixed(2) : <span className="text-[#9CA3AF]">—</span>}
+                      </td>
+                      <td className="px-3 py-2">
+                        {item.mic_ecoli ? item.mic_ecoli : <span className="text-[#9CA3AF]">null</span>}
+                      </td>
+                      <td className="px-3 py-2">
+                        {item.combined_rank_score != null ? item.combined_rank_score.toFixed(4) : <span className="text-[#9CA3AF]">—</span>}
+                      </td>
+                      <td className="px-3 py-2">
+                        {item.net_charge_approx != null ? `${item.net_charge_approx > 0 ? '+' : ''}${item.net_charge_approx.toFixed(1)}` : <span className="text-[#9CA3AF]">—</span>}
+                      </td>
+                      <td className="px-3 py-2">
+                        {item.hydrophobic_fraction != null ? item.hydrophobic_fraction.toFixed(2) : <span className="text-[#9CA3AF]">—</span>}
+                      </td>
+                      <td className="px-3 py-2 text-[12px]">{item.source_group || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-2 bg-[#F9FAFB] border-t border-[#E5E7EB] text-[11px] text-[#6B7280]">
+              Showing {filteredP6f.length} of {p6fData.length} entries
+              {p6fDisclaimer && (
+                <span className="ml-2 text-[#991B1B]">{p6fDisclaimer}</span>
+              )}
             </div>
           </div>
         )}

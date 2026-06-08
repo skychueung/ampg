@@ -76,3 +76,30 @@ class ReviewSummaryOut(BaseModel):
     local_real_smoke_shortlisted: int
     local_demo_shortlisted: int
     disclaimer: str = ""
+
+
+class P6FShortlistItem(BaseModel):
+    rank: int
+    sequence: str
+    length: int
+    amp_score: Optional[float] = None
+    amp_like: Optional[int] = None
+    mic_saureus: Optional[float] = None
+    mic_saureus_logmic: Optional[float] = None
+    mic_ecoli: Optional[str] = None
+    combined_rank_score: Optional[float] = None
+    net_charge_approx: Optional[float] = None
+    hydrophobic_fraction: Optional[float] = None
+    run_id: Optional[str] = None
+    batch_id: Optional[str] = None
+    peptide_id: Optional[str] = None
+    source_group: Optional[str] = None
+    source: Optional[str] = None
+
+
+class P6FShortlistResponse(BaseModel):
+    type: str
+    count: int
+    items: List[P6FShortlistItem]
+    source_label: str
+    disclaimer: str = ""

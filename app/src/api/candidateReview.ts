@@ -135,3 +135,68 @@ export function exportSynthesisOrderCsv(): Promise<Blob> {
     return res.blob()
   })
 }
+
+/* ------------------------------------------------------------------ */
+/*  P6F Combined Shortlist                                            */
+/* ------------------------------------------------------------------ */
+
+export interface P6FShortlistItem {
+  rank: number
+  sequence: string
+  length: number
+  amp_score: number | null
+  amp_like: number | null
+  mic_saureus: number | null
+  mic_saureus_logmic: number | null
+  mic_ecoli: string | null
+  combined_rank_score: number | null
+  net_charge_approx: number | null
+  hydrophobic_fraction: number | null
+  run_id: string | null
+  batch_id: string | null
+  peptide_id: string | null
+  source_group: string | null
+  source: string | null
+}
+
+export interface P6FShortlistResponse {
+  type: string
+  count: number
+  items: P6FShortlistItem[]
+  source_label: string
+  disclaimer: string
+}
+
+export function getP6FShortlist(type: string): Promise<P6FShortlistResponse> {
+  return apiClient.get(`/v1/candidate-review/p6f-shortlist?type=${encodeURIComponent(type)}`)
+}
+
+export function exportP6FShortlistCsv(items: P6FShortlistItem[], filename: string): void {
+  const headers = [
+    'rank', 'sequence', 'length', 'amp_score', 'mic_saureus', 'mic_ecoli',
+    'combined_rank_score', 'net_charge_approx', 'hydrophobic_fraction',
+    'run_id', 'batch_id', 'source_group', 'source',
+  ]
+  const rows = items.map((item) =>
+    headers.map((h) => {
+      const val = (item as any)[h]
+      if (val === null || val === undefined) return ''
+      const str = String(val)
+      // Escape quotes and wrap in quotes if contains comma
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }).join(',')
+  )
+  const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}

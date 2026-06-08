@@ -39,6 +39,7 @@ function PageTitleProvider({ children }: { children: React.ReactNode }) {
   else if (pathname.startsWith('/ampgen-workflow')) title = 'AMPGen Workflow'
   else if (pathname.startsWith('/generation-runs/')) title = 'Generation Run Detail'
   else if (pathname.startsWith('/peptide-analytics')) title = 'Peptide Analytics'
+  else if (pathname.startsWith('/candidate-review')) title = 'Candidate Review'
   else if (pathname.startsWith('/maintenance')) title = 'Local Maintenance'
 
   return <Layout title={title}>{children}</Layout>
