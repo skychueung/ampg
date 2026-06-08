@@ -314,3 +314,86 @@ Project Snapshot 是一个便于迁移和归档的压缩包，包含：
 - `.git` 目录（快照本身已含 git commit 信息）
 
 Snapshot 是开发/运维工具，不能替代实验记录本或数据管理计划（DMP）。
+
+
+## 26. P6E amp_score 是模型预测，不是实验验证（v0.6.7）
+
+P6E XGBoost AMP discriminator 为每个生成的肽序列计算 `amp_score`：
+
+- **模型类型**：XGBoost XGBClassifier（binary:logistic）
+- **训练数据**：21,953 条序列（9,964 AMP / 11,989 non-AMP）
+- **特征维度**：1,311（14 种 iFeature/PseKRAAC 组合）
+- **模型性能**：Accuracy=0.9640, F1=0.9602, AUC=0.9943
+
+**必须明确标识：**
+- `amp_score` 是**计算预测概率**（0–1），不是实验测定的抗菌活性。
+- 高 `amp_score` 仅表示该序列在训练数据分布中更像已知 AMP，不代表对特定菌株有抑制活性。
+- `amp_score` 不是 MIC，不能替代 MIC 测定。
+- 模型训练数据来自已发表文献，存在数据偏差和物种覆盖不均问题。
+
+页面上必须显示：
+> `amp_score` is a computational prediction from an XGBoost model. Not experimentally validated.
+
+## 27. P6F mic_saureus 是基线回归预测，不是实验测定 MIC（v0.6.8）
+
+P6F XGBoost baseline regressor 为每个生成的肽序列预测 `mic_saureus`（μM）：
+
+- **模型类型**：XGBoost XGBRegressor
+- **训练数据**：18,671 条 *S. aureus* MIC 数据（Sequence + logMIC）
+- **特征维度**：25（简单理化特征：长度、净电荷近似、疏水比例、芳香族数、硫氨基酸数 + 20 种 AA 频率）
+- **模型性能**：Test R²=0.8464, Test RMSE=0.5456, Test MAE=0.2976（logMIC 尺度）
+
+**必须明确标识：**
+- `mic_saureus` 是**计算预测值**（μM），不是实验 broth microdilution 测定的 MIC。
+- 当前模型为 **baseline**（简单理化特征），精度有限，后续可升级至 ESM2+iFeature 深度模型。
+- 预测值范围可能包含极端值（如 >10,000 μM），不代表真实可测范围。
+- `mic_saureus` 不能代表 `mic_ecoli`（模型仅训练于 *S. aureus* 数据）。
+
+页面上必须显示：
+> `mic_saureus` is a computational prediction from a baseline XGBoost regressor. Not an experimentally measured MIC.
+
+## 28. mic_ecoli 保持 null（v0.6.8）
+
+`mic_ecoli` 字段当前**始终为 null**：
+
+- **原因**：E. coli 训练数据 `regression_ecoli_all.csv` 为 git-lfs pointer，无真实数据可用。
+- **后果**：无法训练 E. coli MIC 预测模型。
+- **禁止行为**：  - 不得用 `mic_saureus` 推断 `mic_ecoli`。  - 不得在 UI 或报告中显示虚假的 E. coli MIC 值。  - 不得将 *S. aureus* 模型输出标注为广谱活性。
+
+页面上必须显示：
+> `mic_ecoli` is not computed. No model or data available for E. coli MIC prediction.
+
+## 29. Combined Shortlist 是计算筛选，不是实验验证（v0.6.9）
+
+P6F combined shortlist 使用以下计算规则筛选候选肽：
+
+- **AMP-like 阈值**：`amp_score >= 0.5`
+- **Combined ranking**：综合 `amp_score`（越高越好）和 `mic_saureus`（越低越好）的排序
+- **Representative 50**：k-mer Jaccard 去冗余，保留序列多样性
+
+**必须明确标识：**
+- Shortlist 是**计算筛选结果**，不是实验验证的"最佳肽"。
+- 进入 shortlist 不代表该肽具有抗菌活性。
+- 未进入 shortlist 也不代表该肽完全无效（可能值得实验探索）。
+- `representative50` 的"代表性"指序列多样性，不是功能多样性。
+
+页面上必须显示：
+> Shortlist is computational screening only. Not experimentally validated.
+
+## 30. Candidate Review 页面科学边界（v0.6.9）
+
+Candidate Review Workbench 页面在以下位置持续展示科学边界：
+
+- 页面顶部**红色警示横幅**：`Computational prediction only. Not experimentally validated.`
+- 表格中 `mic_ecoli` 列始终显示 `null` / `Not computed`
+- CSV 下载文件尾部包含免责声明行
+- API 响应包含 `disclaimer` 字段
+
+**禁止行为**：
+- 不得将 Candidate Review 筛选结果直接作为实验结论发表。
+- 不得将 `amp_score` 或 `mic_saureus` 预测值写入实验记录本作为"测定值"。
+- 不得向 CRO（多肽合成公司）声称 shortlist 中的肽"已验证有效"。
+
+---
+
+*Last updated: 2026-06-08 (v0.6.9-candidate-review)*

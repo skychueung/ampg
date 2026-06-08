@@ -1,152 +1,171 @@
-# AMPGen Agent Platform
+# AMPGen Visualization Platform
 
-AMPGen Agent Platform 是一个 AMPGen 可视化 Agent 工作流平台，用于抗菌肽（AMP）的 AI 生成、筛选、评估与管理。
+> **AMPGen Agent Platform** — 将 AMPGen 从命令行生成模型升级为支持网页提交任务、服务器 GPU 生成、P6E/P6F 自动评分、combined shortlist、Candidate Review 可视化筛选的科研平台。
 
-## 当前版本能力
+---
 
-| 能力 | 状态 |
-|------|------|
-| React + Vite + TypeScript 前端 | ✅ |
-| FastAPI + SQLAlchemy + SQLite 后端 | ✅ |
-| Candidate Library 真实 API 联动 | ✅ |
-| Task Center 真实 API 联动 | ✅ |
-| Generation 真实 API 联动 | ✅ |
-| LOCAL_DEMO（≤5，内存快速生成） | ✅ |
-| LOCAL_REAL_SMOKE（≤2，真实 AMPGen 调用） | ✅ |
-| SERVER_PRODUCTION（BLOCKED） | ✅ |
-| 异步任务（threading.Thread 后台执行） | ✅ |
-| 前端轮询（3s 间隔，实时状态更新） | ✅ |
-| 进度条 + 计时器 + 实时日志 | ✅ |
-| stdout/stderr 日志捕获与展示 | ✅ |
-| 安全任务取消（cancel_requested + PID 管理） | ✅ |
-| 报告导出中心（CSV / FASTA / JSON / Markdown） | ✅ |
-| Generation Run JSON/Markdown 报告 | ✅ |
-| Peptide Sequence Explorer（重复/相似性/基序/代表肽） | ✅ |
-| Candidate Review Workbench（评审/短名单/合成导出） | ✅ |
-| Local Maintenance（备份/恢复/快照/清理） | ✅ |
-| ARIS-Lite 四角色审查协议 | ✅（设计参考） |
+## Current Version Status
 
-## 技术栈
+- **Latest tag**: `v0.6.9-candidate-review` (`b54110d`)
+- **Next milestone**: `v0.7.0-release-ready` (docs completion in progress)
+- **Core function completion**: ~85%
 
-- **前端**：React 18, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React
-- **后端**：FastAPI, SQLAlchemy, SQLite, Uvicorn
-- **生成引擎**：AMPGen（本地 evodiff，CPU 模式）
-- **测试**：pytest, TestClient
+---
 
-## 启动方式
+## Core Capabilities
 
-### 方式一：一键启动（推荐）
+| Capability | Status | Details |
+|---|---|---|
+| SERVER_PRODUCTION single-run generation | ✅ | GPU `cuda:1`, count=3/30/300/500/1000 all passed |
+| Batch Queue chunked generation | ✅ | total_count=12/50/300/500/1000 all passed |
+| GPU real computation | ✅ | 2× RTX 4090, `cuda:1`, stable |
+| P6E amp_score | ✅ | XGBoost AMP discriminator, Acc=0.9640, F1=0.9602, AUC=0.9943 |
+| P6F S. aureus mic_saureus | ✅ | XGBoost baseline regressor, Test R²=0.8464 |
+| P6F combined shortlist | ✅ | 10 ranking types (Top100/50/20 × combined/low-mic/high-amp + representative50) |
+| Candidate Review Workbench | ✅ | Sort, filter, CSV download, scientific boundary banner |
+| CSV / FASTA / JSON / Markdown export | ✅ | Report export center |
+| Obsidian local memory | ✅ | 10 master source files + task reports |
+| GitHub tag chain | ✅ | v0.6.0–v0.6.9 all remote visible |
+
+---
+
+## Current Null / Unsupported Fields
+
+| Field | Status | Reason |
+|---|---|---|
+| `mic_ecoli` | `null` | E. coli data is git-lfs pointer; no model trained |
+| `toxicity_risk` | `null` | No toxicity prediction model integrated |
+| `hemolysis_risk` | `null` | No hemolysis prediction model integrated |
+| Wet-lab validation | N/A | Platform is computational only |
+
+---
+
+## Port Rules
+
+| Service | Backend | Frontend |
+|---|---|---|
+| **AMPGen** | `18601` | `18600` |
+| **STAMP** | `8001` | `8080` |
+
+- AMPGen must **not** occupy 8001/8080.
+- STAMP ports are reserved and must **not** be modified.
+- Local frontend dev server may use 3000; server deployment must use 18600.
+
+---
+
+## Scientific Boundary (Summary)
+
+> **All scores are computational predictions. None are experimentally validated.**
+
+- `amp_score` — P6E XGBoost AMP discriminator **prediction**, not an experimental MIC.
+- `mic_saureus` — P6F XGBoost baseline regressor **prediction**, not an experimentally measured MIC.
+- `mic_ecoli` — Currently `null`. No model or data available.
+- `shortlist` / `representative` — Computational screening and deduplication. Not experimental validation.
+- **All candidate peptides require wet-lab validation** before any experimental conclusion can be drawn.
+
+**Do not forge MIC, toxicity, hemolysis, or wet-lab conclusions.**
+
+See [docs/SCIENCE_BOUNDARY.md](./docs/SCIENCE_BOUNDARY.md) for full details.
+
+---
+
+## Quick Start
+
+### Local Development
 
 ```powershell
-# 在项目根目录
-.\scripts\start_all.ps1
-```
-
-这将打开两个 PowerShell 窗口：
-- 后端：`http://127.0.0.1:8001`
-- 前端：`http://localhost:3000`
-
-### 方式二：手动启动
-
-```powershell
-# 终端 1：启动后端
+# Terminal 1: Backend
 cd backend
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 18601
 
-# 终端 2：启动前端
+# Terminal 2: Frontend
 cd app
-npm run dev
+npm run dev        # http://localhost:3000 (dev mode)
 ```
 
-### 方式三：健康检查
+### Server Deployment (stamp218)
 
-```powershell
-.\scripts\healthcheck.ps1
+```bash
+# Backend
+ssh xh@192.168.31.218
+cd /home/xh/kxc/ampg可视化/backend
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 18601
+
+# Frontend
+cd /home/xh/kxc/ampg可视化/app
+npm run preview -- --host 0.0.0.0 --port 18600
 ```
 
-## 当前限制
+---
 
-| 限制 | 说明 |
-|------|------|
-| LOCAL_REAL_SMOKE count ≤ 2 | 本机资源限制，超过即 BLOCKED |
-| 未接远程服务器 | SERVER_PRODUCTION 始终 BLOCKED |
-| 未接 XGBoost AMP discriminator | `amp_score` 在 LOCAL_REAL_SMOKE 中为空 |
-| 未接 MIC scorer | `mic_ecoli`, `mic_saureus` 为空 |
-| 未做完整 ARIS 多 Agent 后端系统 | 四角色审查目前为设计参考 |
-| 不伪造模型分数 | Demo 模式仅使用启发式公式，不冒充模型输出 |
-| 取消非即时 | 取消请求发送后，runner 在下一个检查点终止，不是瞬间停止 |
+## Technology Stack
 
-## 项目结构
+- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React
+- **Backend**: FastAPI, SQLAlchemy, SQLite, Uvicorn
+- **Generation Engine**: AMPGen (evodiff, GPU `cuda:1` on stamp218)
+- **Scoring**: P6E XGBoost AMP discriminator, P6F XGBoost baseline MIC regressor
+- **Testing**: pytest, TestClient
+
+---
+
+## Project Structure
 
 ```
 .
-├── app/                    # React 前端
+├── app/                          # React frontend
 │   ├── src/
-│   │   ├── api/           # API 客户端
-│   │   ├── pages/         # 页面组件
+│   │   ├── api/                 # API clients
+│   │   ├── pages/               # Page components
 │   │   └── ...
 │   └── package.json
-├── backend/               # FastAPI 后端
+├── backend/                      # FastAPI backend
 │   ├── app/
-│   │   ├── routers/       # API 路由
-│   │   ├── runners/       # 后台任务执行器
-│   │   ├── models/        # SQLAlchemy 模型
-│   │   └── services/      # 业务服务
-│   ├── tests/             # pytest 测试
+│   │   ├── routers/             # API routers
+│   │   ├── runners/             # Background task runners
+│   │   ├── scorers/             # P6E / P6F scoring modules
+│   │   ├── models/              # SQLAlchemy models
+│   │   └── services/            # Business services
+│   ├── tests/                   # pytest tests
 │   └── requirements.txt
-├── scripts/               # 启动/停止/检查脚本
-├── docs/                  # 技术文档
-├── README.md              # 本文件
-├── VERSION.md             # 版本说明
-├── CHANGELOG.md           # 变更日志
-└── DEMO_GUIDE.md          # 演示指南
+├── scripts/                      # Startup / healthcheck / smoke scripts
+├── docs/                         # Documentation
+│   ├── V070_RELEASE_NOTES.md
+│   ├── USER_GUIDE_CANDIDATE_REVIEW.md
+│   ├── SCIENCE_BOUNDARY.md
+│   ├── RUNTIME_CONFIG_AND_COMPUTE_BOUNDARY.md
+│   ├── DEPLOYMENT_STAMP218.md
+│   ├── ARTIFACTS_AND_REPORTS.md
+│   ├── VERSION_TAGS.md
+│   ├── LOCAL_AGENT_INTEGRATION_PLAN.md
+│   ├── RUNBOOK.md
+│   └── ...
+├── README.md                     # This file
+└── .env.example                  # Environment template (no real values)
 ```
 
-## 版本
+---
 
-当前版本：**v0.5.9-local-maintenance**
+## GitHub Notes
 
-详见 [VERSION.md](./VERSION.md) 和 [CHANGELOG.md](./CHANGELOG.md)。
+**Do not commit**:
 
-## 科学边界声明
+- `.env` files (real credentials)
+- SQLite databases (`*.db`)
+- `reports/` / `artifacts/` / `server-artifacts/`
+- Model weight files (`.pt`, `.pth`, `.ckpt`, `.safetensors`, `.bin`, `.joblib`)
+- `venv/` / `node_modules/` / `dist/` (except server preview build)
+- Obsidian vault
+- Tokens, passwords, or keys
 
-本平台所有计算预测结果均未经实验验证。生成的候选肽序列需要后续体外实验（MIC、溶血性、细胞毒性等）验证才能得出抗菌活性结论。
+Only platform **source code** and **documentation** belong in the GitHub repository.
 
-详见 [docs/SCIENTIFIC_BOUNDARY.md](./docs/SCIENTIFIC_BOUNDARY.md)。
+---
 
-## 许可证
+## License
 
-内部使用。实验数据不得作为临床或商业决策依据。
+Internal use. Experimental data must not be used as the sole basis for clinical or commercial decisions without independent wet-lab validation.
 
+---
 
-## v0.5.1-hotfix (2026-05-26)
-
-- LOCAL_DEMO no longer writes fake mp_score, mic_ecoli, mic_saureus, 	oxicity_risk, or hemolysis_risk.
-- Historical fake demo scores have been cleared from the SQLite database.
-- All null scores display as **Not computed** in the UI and remain empty in CSV exports.
-- See docs/SCIENTIFIC_BOUNDARY.md for details.
-
-
-## v0.5.2-dashboard-report-preview-fix (2026-05-26)
-
-- Dashboard now uses real GET /api/v1/dashboard/summary and GET /api/v1/dashboard/recent-runs APIs.
-- ReportExport preview now uses real GET /api/v1/peptides API instead of DEMO_PEPTIDES.
-- PeptideDetail now uses real GET /api/v1/peptides/{id} API instead of demoData.
-- Removed all main-flow demoData dependencies from Dashboard, ReportExport, and PeptideDetail.
-- Added ackend/app/routers/dashboard.py with summary and recent-runs endpoints.
-- Added pp/src/api/dashboard.ts client.
-- pytest 46/46 pass.
-
-
-## v0.5.3-frontend-code-splitting (2026-05-26)
-
-- All major pages now use React.lazy + Suspense for route-level code splitting.
-- Vite manualChunks splits vendor libraries into separate chunks:
-  - vendor-react (react, react-dom, react-router-dom)
-  - vendor-framer (framer-motion)
-  - vendor-recharts (recharts)
-  - vendor-icons (lucide-react)
-- Main JS bundle reduced from ~1333 KB to ~244 KB (gzip: 77 KB).
-- Added PageLoading component for lazy route fallback.
-- No business logic changed.
-
+*Current version: v0.6.9-candidate-review*  
+*Next: v0.7.0-release-ready (docs completion in progress)*
