@@ -4,6 +4,7 @@ All data from real SQLite. No demo data, no fake scores.
 """
 import csv
 import glob
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Optional
