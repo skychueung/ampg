@@ -165,24 +165,39 @@ export interface P6FShortlistResponse {
   items: P6FShortlistItem[]
   source_label: string
   disclaimer: string
+  metadata?: {
+    available_types: string[]
+    total_rows: number
+    columns: string[]
+    generated_at: string
+    source_manifest: string
+  }
 }
 
 export function getP6FShortlist(type: string): Promise<P6FShortlistResponse> {
   return apiClient.get(`/v1/candidate-review/p6f-shortlist?type=${encodeURIComponent(type)}`)
 }
 
-export function exportP6FShortlistCsv(items: P6FShortlistItem[], filename: string): void {
+export function exportP6FShortlistCsv(
+  items: P6FShortlistItem[],
+  filename?: string,
+  options?: { filtered?: boolean; type?: string; disclaimer?: string }
+): void {
   const headers = [
     'rank', 'sequence', 'length', 'amp_score', 'mic_saureus', 'mic_ecoli',
     'combined_rank_score', 'net_charge_approx', 'hydrophobic_fraction',
     'run_id', 'batch_id', 'source_group', 'source',
+    'scientific_disclaimer',
   ]
   const rows = items.map((item) =>
     headers.map((h) => {
+      if (h === 'scientific_disclaimer') {
+        const d = options?.disclaimer || 'Computational prediction only; not experimentally validated.'
+        return `"${d.replace(/"/g, '""')}"`
+      }
       const val = (item as any)[h]
       if (val === null || val === undefined) return ''
       const str = String(val)
-      // Escape quotes and wrap in quotes if contains comma
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
         return `"${str.replace(/"/g, '""')}"`
       }
@@ -194,9 +209,17 @@ export function exportP6FShortlistCsv(items: P6FShortlistItem[], filename: strin
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename
+  const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+  const typeLabel = options?.type || 'shortlist'
+  const filterLabel = options?.filtered ? 'filtered' : 'full'
+  a.download = filename || `ampgen_${typeLabel}_${filterLabel}_${ts}.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+export function copyAllSequences(items: P6FShortlistItem[]): Promise<void> {
+  const text = items.map((item) => item.sequence).join('\n')
+  return navigator.clipboard.writeText(text)
 }

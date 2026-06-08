@@ -472,4 +472,16 @@ def get_p6f_shortlist(
             "mic_ecoli remains null because no E. coli model is available. "
             "Wet-lab validation is required before any therapeutic claims can be made."
         ),
+        metadata={
+            "available_types": list(P6F_SHORTLIST_TYPE_MAP.keys()),
+            "total_rows": len(items),
+            "columns": [
+                "rank", "sequence", "length", "amp_score", "amp_like",
+                "mic_saureus", "mic_saureus_logmic", "mic_ecoli",
+                "combined_rank_score", "net_charge_approx", "hydrophobic_fraction",
+                "run_id", "batch_id", "peptide_id", "source_group", "source",
+            ],
+            "generated_at": datetime.fromtimestamp(csv_path.stat().st_mtime).isoformat(),
+            "source_manifest": str(csv_path),
+        },
     )

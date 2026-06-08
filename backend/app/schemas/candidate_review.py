@@ -103,3 +103,4 @@ class P6FShortlistResponse(BaseModel):
     items: List[P6FShortlistItem]
     source_label: str
     disclaimer: str = ""
+    metadata: dict = {}
