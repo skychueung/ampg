@@ -30,82 +30,14 @@ from app.models.peptide import PeptideCandidate
 from app.services.physicochemical import apply_amp_filter, check_invalid_aa
 from app.config import AMPGEN_PYTHON_EXECUTABLE
 
+# Import scorer functions from server_production_runner to avoid duplication
+from app.runners.server_production_runner import (
+    _score_sequences_with_p6e,
+    _score_sequences_with_p6f,
+    _score_sequences_with_p6f_ecoli,
+)
+
 AMPGEN_GENERATOR_DIR = AMPGEN_ROOT / "AMP_generator"
-
-# P6E XGBoost Discriminator paths
-P6E_SCORER_VENV_PYTHON = Path("/home/xh/kxc/ampg可视化/.venv-p6e-scorer/bin/python")
-P6E_SCORER_CLI = Path("/home/xh/kxc/ampg可视化/p6e_discriminator_export_work/p6e_score_cli.py")
-P6E_SCORER_MODEL = Path("/mnt/sdb/ampg可视化/scorer-models/p6e_xgboost_amp_discriminator/xgb_amp_discriminator_20260602_102905.joblib")
-P6E_SCORER_ENABLED = P6E_SCORER_VENV_PYTHON.exists() and P6E_SCORER_CLI.exists() and P6E_SCORER_MODEL.exists()
-
-
-def _score_sequences_with_p6e(sequences: list) -> list:
-    """Run P6E XGBoost discriminator on sequences via subprocess. Returns list of scores or Nones."""
-    if not P6E_SCORER_ENABLED:
-        return [None] * len(sequences)
-    if not sequences:
-        return []
-    
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            input_path = Path(tmpdir) / "seqs.json"
-            output_path = Path(tmpdir) / "scores.json"
-            with open(input_path, "w") as f:
-                json.dump(sequences, f)
-            
-            cmd = [
-                str(P6E_SCORER_VENV_PYTHON),
-                str(P6E_SCORER_CLI),
-                "--input", str(input_path),
-                "--model", str(P6E_SCORER_MODEL),
-                "--output", str(output_path),
-            ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            if result.returncode != 0:
-                print(f"[P6E Scorer] Error: {result.stderr}")
-                return [None] * len(sequences)
-            
-            with open(output_path) as f:
-                scores = json.load(f)
-            return scores
-    except Exception as e:
-        print(f"[P6E Scorer] Exception: {e}")
-        return [None] * len(sequences)
-
-
-def _score_sequences_with_p6f(sequences: list) -> list:
-    """Run P6F S. aureus MIC baseline scorer on sequences via subprocess.
-    Returns list of dicts or Nones on failure."""
-    if not P6F_SCORER_ENABLED:
-        return [None] * len(sequences)
-    if not sequences:
-        return []
-
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            input_path = Path(tmpdir) / "seqs.json"
-            output_path = Path(tmpdir) / "mic.json"
-            with open(input_path, "w") as f:
-                json.dump(sequences, f)
-
-            cmd = [
-                str(P6F_SCORER_VENV_PYTHON),
-                str(P6F_SCORER_CLI),
-                "--input", str(input_path),
-                "--model", str(P6F_SCORER_MODEL),
-                "--metadata", str(P6F_SCORER_MODEL.with_suffix(".metadata.json")),
-                "--output", str(output_path),
-            ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            if result.returncode != 0:
-                print(f"[P6F Scorer] Error: {result.stderr}")
-                return [None] * len(sequences)
-
-            with open(output_path) as f:
-                return json.load(f)
-    except Exception as e:
-        print(f"[P6F Scorer] Exception: {e}")
-        return [None] * len(sequences)
 
 
 def _resolve_msa_directory() -> Path:
@@ -294,7 +226,10 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
     amp_scores = _score_sequences_with_p6e(sequences)
 
     # Run P6F S. aureus MIC scoring
-    mic_scores = _score_sequences_with_p6f(sequences)
+    mic_results = _score_sequences_with_p6f(sequences)
+
+    # Run P6F E. coli MIC scoring
+    mic_ecoli_results = _score_sequences_with_p6f_ecoli(sequences)
 
     # Insert peptides into DB
     generated_count = 0
@@ -307,6 +242,12 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
         else:
             status = "FILTERED"
 
+        mic_result = mic_results[idx] if idx < len(mic_results) else None
+        mic_saureus_val = mic_result["mic_saureus_uM_pred"] if mic_result else None
+
+        mic_ecoli_result = mic_ecoli_results[idx] if idx < len(mic_ecoli_results) else None
+        mic_ecoli_val = mic_ecoli_result["mic_ecoli_uM_pred"] if mic_ecoli_result else None
+
         peptide = PeptideCandidate(
             sequence=seq,
             length=filter_result["length"],
@@ -315,12 +256,8 @@ def run_local_real_smoke(db: Session, run: GenerationRun) -> dict:
             hydrophobicity=filter_result["hydrophobicity"],
             valid_aa=filter_result["valid_aa"],
             amp_score=amp_scores[idx] if idx < len(amp_scores) else None,
-            mic_ecoli=None,
-            mic_saureus=(
-                mic_scores[idx]["mic_saureus_uM_pred"]
-                if (idx < len(mic_scores) and mic_scores[idx])
-                else None
-            ),
+            mic_ecoli=mic_ecoli_val,
+            mic_saureus=mic_saureus_val,
             toxicity_risk=None,
             hemolysis_risk=None,
             status=status,
