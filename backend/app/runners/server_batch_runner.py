@@ -12,6 +12,7 @@ Constraints:
 import csv
 import json
 import math
+import shutil
 import threading
 import time
 import traceback
@@ -316,9 +317,11 @@ def _worker(batch_id: int):
             item.status = "RUNNING"
             db.commit()
 
-            chunk_output_csv = job_dir / f"chunk_{item.chunk_index}.csv"
+            chunk_tmp_dir = job_dir / "tmp" / f"chunk-{item.chunk_index:04d}"
+            chunk_tmp_dir.mkdir(parents=True, exist_ok=True)
+            chunk_output_csv = chunk_tmp_dir / "generated_sequences.csv"
             try:
-                result = run_server_production(db, run, artifact_dir=job_dir, output_csv=chunk_output_csv)
+                result = run_server_production(db, run, artifact_dir=chunk_tmp_dir, output_csv=chunk_output_csv)
             except Exception as e:
                 result = {"status": "FAILED", "message": str(e)}
 
@@ -332,6 +335,11 @@ def _worker(batch_id: int):
                 item.artifact_dir = str(job_dir)
                 try:
                     chunk_output_csv.unlink()
+                except Exception:
+                    pass
+                try:
+                    import shutil
+                    shutil.rmtree(chunk_tmp_dir, ignore_errors=True)
                 except Exception:
                     pass
             elif result["status"] == "CANCELLED":
