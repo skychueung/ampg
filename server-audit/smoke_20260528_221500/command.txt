@@ -1,0 +1,1 @@
+conda run -n AMPGen python /home/xh/kxc/ampgenkxc/AMPGen/AMP_generator/unconditional_generation.py --total_sequences 1 --batch_size 1 --output_file /home/xh/kxc/ampg可视化/server-audit/smoke_20260528_221500/minimal_smoke.csv --to_device cuda
