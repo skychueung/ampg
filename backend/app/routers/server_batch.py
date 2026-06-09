@@ -36,6 +36,18 @@ def create_server_batch(payload: ServerBatchCreate, db: Session = Depends(get_db
     if payload.backend != "SERVER_PRODUCTION":
         raise HTTPException(status_code=400, detail="Only SERVER_PRODUCTION backend is supported for batch mode.")
 
+
+    # --- Prevent concurrent active batches ---
+    existing_active = db.query(GenerationBatch).filter(
+        GenerationBatch.status.in_(["RUNNING", "PENDING", "CANCEL_REQUESTED"])
+    ).first()
+    if existing_active:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Existing active or stale batch (id={existing_active.id}, status={existing_active.status}) requires cleanup before starting a new production batch."
+        )
+    # --- End prevent concurrent active batches ---
+
     if payload.total_count > SERVER_BATCH_MAX_TOTAL_COUNT:
         raise HTTPException(
             status_code=400,

@@ -6,6 +6,32 @@ from app.routers import health, system, tasks, generation, peptides, filters, re
 Base.metadata.create_all(bind=engine)
 run_migrations()
 
+# --- Stale batch reconcile on startup ---
+from datetime import datetime
+try:
+    from app.db import SessionLocal
+    from app.models.generation_batch import GenerationBatch
+    _db = SessionLocal()
+    _stale = _db.query(GenerationBatch).filter(
+        GenerationBatch.status.in_(["RUNNING", "PENDING", "CANCEL_REQUESTED"])
+    ).all()
+    for _batch in _stale:
+        _old_status = _batch.status
+        if _batch.status == "CANCEL_REQUESTED":
+            _batch.status = "CANCELLED"
+        else:
+            _batch.status = "FAILED"
+        _batch.message = f"Stale job reconciled on backend startup: previous status={_old_status}, no active runner process."
+        _batch.completed_at = datetime.utcnow()
+    if _stale:
+        _db.commit()
+        print(f"[STARTUP] Reconciled {len(_stale)} stale batch job(s) to terminal status.")
+    _db.close()
+except Exception as _e:
+    print(f"[STARTUP] Batch reconcile warning (non-blocking): {_e}")
+# --- End stale batch reconcile ---
+
+
 app = FastAPI(
     title="AMPGen Server-Only API",
     description="Server-only production API for AMPGen generation and run tracking.",
