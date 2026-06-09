@@ -166,7 +166,7 @@ def _score_sequences_with_p6f_ecoli(sequences: list) -> list:
         return [None] * len(sequences)
 
 
-def run_server_production(db: Session, run: GenerationRun) -> dict:
+def run_server_production(db: Session, run: GenerationRun, artifact_dir: Path = None, output_csv: Path = None) -> dict:
     if not SERVER_PRODUCTION_ENABLED:
         return {
             "status": "BLOCKED",
@@ -191,11 +191,17 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
         db.commit()
 
     # Prepare artifact directory
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    artifact_subdir = SERVER_ARTIFACT_DIR / f"run_{run.id}_{timestamp}"
+    if artifact_dir is not None:
+        artifact_subdir = Path(artifact_dir)
+    else:
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        artifact_subdir = SERVER_ARTIFACT_DIR / f"run_{run.id}_{timestamp}"
     artifact_subdir.mkdir(parents=True, exist_ok=True)
 
-    output_csv = (artifact_subdir / "generated_sequences.csv").resolve()
+    if output_csv is not None:
+        output_csv = Path(output_csv).resolve()
+    else:
+        output_csv = (artifact_subdir / "generated_sequences.csv").resolve()
     stdout_log = artifact_subdir / "stdout.log"
     stderr_log = artifact_subdir / "stderr.log"
 
@@ -336,7 +342,7 @@ def run_server_production(db: Session, run: GenerationRun) -> dict:
                     sequences.append(seq)
 
     # Generate FASTA artifact
-    fasta_path = artifact_subdir / "generated_sequences.fasta"
+    fasta_path = artifact_subdir / f"{output_csv.stem}.fasta"
     with open(fasta_path, "w", encoding="utf-8") as f:
         for idx, seq in enumerate(sequences):
             f.write(f">AMP_{idx}|run={run.id}|mode={mode}|disclaimer={DISCLAIMER}\n")

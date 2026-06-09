@@ -217,7 +217,10 @@ def cancel_server_batch(batch_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Cannot cancel batch in {batch.status} status.")
 
     if batch.status == "RUNNING":
-        raise HTTPException(status_code=400, detail="RUNNING cancellation is not supported yet.")
+        batch.status = "CANCEL_REQUESTED"
+        batch.message = "Cancellation requested. Will stop at next chunk boundary."
+        db.commit()
+        return {"status": "CANCEL_REQUESTED", "message": "Batch cancellation requested. The runner will stop at the next chunk boundary."}
 
     # Only PENDING can be cancelled in MVP
     batch.status = "CANCELLED"
