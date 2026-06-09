@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ServerBatchCreate(BaseModel):
     batch_name: str = "batch"
-    total_count: int = Field(..., ge=1, le=1000)
+    total_count: int = Field(..., ge=1, le=100000)
     backend: str = "SERVER_PRODUCTION"
     mode: str = "Sequence-based"
     min_length: Optional[int] = 15
