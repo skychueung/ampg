@@ -34,6 +34,9 @@ from app.config import AMPGEN_PYTHON_EXECUTABLE
 
 AMPGEN_GENERATOR_DIR = AMPGEN_ROOT / "AMP_generator"
 
+# Standard 20 amino acids for PseKRAAC feature extraction boundary
+STANDARD_AA = set("ACDEFGHIKLMNPQRSTVWY")
+
 # P6E XGBoost Discriminator paths
 P6E_SCORER_VENV_PYTHON = Path("/home/xh/kxc/ampg可视化/.venv-p6e-scorer/bin/python")
 P6E_SCORER_CLI = Path("/home/xh/kxc/ampg可视化/p6e_discriminator_export_work/p6e_score_cli.py")
@@ -69,19 +72,50 @@ def _resolve_msa_directory() -> Path:
 
 
 def _score_sequences_with_p6e(sequences: list) -> list:
-    """Run P6E XGBoost discriminator on sequences via subprocess. Returns list of scores or Nones."""
+    """Run P6E XGBoost discriminator on sequences via subprocess.
+    Returns list of scores or Nones.
+    Sequence-level isolation: unsupported amino acids cause null for that sequence only,
+    without dragging down the entire chunk."""
     if not P6E_SCORER_ENABLED:
         return [None] * len(sequences)
     if not sequences:
         return []
-    
+
+    # Pre-filter: detect unsupported amino acids per sequence
+    unsupported_indices = []
+    supported_sequences = []
+    supported_map = []  # (original_index, sequence)
+
+    for i, seq in enumerate(sequences):
+        seq_upper = seq.upper()
+        unsupported = sorted(set(seq_upper) - STANDARD_AA)
+        if unsupported:
+            unsupported_indices.append((i, unsupported))
+        else:
+            supported_sequences.append(seq)
+            supported_map.append((i, seq))
+
+    # Log unsupported sequences with structured reason
+    if unsupported_indices:
+        for idx, chars in unsupported_indices:
+            print(
+                f"[P6E Scorer] Sequence {idx} unsupported amino acid(s): "
+                f"{','.join(chars)} -> amp_score=null"
+            )
+
+    # If no supported sequences, return all Nones immediately
+    if not supported_sequences:
+        return [None] * len(sequences)
+
+    # Run scorer only on supported sequences
+    supported_scores = []
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "seqs.json"
             output_path = Path(tmpdir) / "scores.json"
             with open(input_path, "w") as f:
-                json.dump(sequences, f)
-            
+                json.dump(supported_sequences, f)
+
             cmd = [
                 str(P6E_SCORER_VENV_PYTHON),
                 str(P6E_SCORER_CLI),
@@ -92,14 +126,20 @@ def _score_sequences_with_p6e(sequences: list) -> list:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             if result.returncode != 0:
                 print(f"[P6E Scorer] Error: {result.stderr}")
-                return [None] * len(sequences)
-            
-            with open(output_path) as f:
-                scores = json.load(f)
-            return scores
+                supported_scores = [None] * len(supported_sequences)
+            else:
+                with open(output_path) as f:
+                    supported_scores = json.load(f)
     except Exception as e:
         print(f"[P6E Scorer] Exception: {e}")
-        return [None] * len(sequences)
+        supported_scores = [None] * len(supported_sequences)
+
+    # Reconstruct result in original order
+    result = [None] * len(sequences)
+    for (orig_idx, _), score in zip(supported_map, supported_scores):
+        result[orig_idx] = score
+
+    return result
 
 
 def _score_sequences_with_p6f(sequences: list) -> list:
