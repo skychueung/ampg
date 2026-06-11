@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useTranslation } from '@/i18n/LanguageContext'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -10,12 +9,11 @@ interface LayoutProps {
 }
 
 export default function Layout({ title, subtitle, children }: LayoutProps) {
-  const [mode, setMode] = useState<'local' | 'server'>('local')
   const { t } = useTranslation()
 
   return (
     <div className="min-h-[100dvh] bg-[#F0F2F5]">
-      <Sidebar mode={mode} onModeChange={setMode} />
+      <Sidebar />
       <Topbar title={title} subtitle={subtitle} />
       <main className="ml-[224px] mt-[64px] p-6 min-h-[calc(100dvh-64px)]">
         <div className="mb-6 p-3 rounded-[8px] bg-[#FFFBEB] border border-[#FCD34D] flex items-start gap-3">

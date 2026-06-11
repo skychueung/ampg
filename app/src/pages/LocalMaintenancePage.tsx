@@ -12,6 +12,7 @@ import {
   type BackupsList,
   type BackupItem,
 } from '../api/maintenance'
+import { IS_SERVER_ONLY } from '@/lib/serverOnly'
 
 const ScientificBoundaryBanner = () => (
   <div className="mb-4 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
@@ -21,7 +22,26 @@ const ScientificBoundaryBanner = () => (
   </div>
 )
 
+function ServerOnlyPlaceholder() {
+  return (
+    <div className="rounded-[8px] border border-[#FDE68A] bg-[#FFFBEB] p-6">
+      <h1 className="mb-2 text-[20px] font-semibold text-[#92400E]">Local Maintenance Disabled</h1>
+      <p className="max-w-3xl text-[14px] leading-6 text-[#78350F]">
+        Server-Only read-only view. No local demo generation is available in this build.
+        Maintenance actions for Local Demo data are disabled on the 18700 production UI.
+      </p>
+      <div className="mt-4 inline-flex items-center rounded-full border border-[#F59E0B] bg-white px-3 py-1 text-[12px] font-medium text-[#92400E]">
+        SERVER_PRODUCTION only
+      </div>
+    </div>
+  )
+}
+
 export default function LocalMaintenancePage() {
+  return IS_SERVER_ONLY ? <ServerOnlyPlaceholder /> : <LocalMaintenanceContent />
+}
+
+function LocalMaintenanceContent() {
 
   const [summary, setSummary] = useState<StorageSummary | null>(null)
   const [backups, setBackups] = useState<BackupsList | null>(null)

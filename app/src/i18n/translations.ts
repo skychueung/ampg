@@ -24,7 +24,7 @@ export const translations: Record<Language, Record<string, unknown>> = {
       demoScoresDisclaimer: 'AMP Score, MIC Score, Toxicity Risk, and Hemolysis Risk are AI predictions (Demo Data) and have NOT been experimentally validated.',
     },
     nav: {
-      dashboard: 'Dashboard', ampGeneration: 'AMP Generation', ampFilter: 'AMP Filter',
+      home: 'Home', dashboard: 'Dashboard', ampGeneration: 'AMP Generation', ampFilter: 'AMP Filter',
       candidateLibrary: 'Candidate Library', taskCenter: 'Task Center',
       serverProduction: 'Server Production', reports: 'Reports', admin: 'Admin',
     },
@@ -231,7 +231,7 @@ export const translations: Record<Language, Record<string, unknown>> = {
       demoScoresDisclaimer: 'AMP 评分、MIC 评分、毒性风险和溶血风险均为 AI 预测（演示数据），未经实验验证。',
     },
     nav: {
-      dashboard: '首页', ampGeneration: 'AMP 生成', ampFilter: 'AMP 筛选',
+      home: '首页', dashboard: '首页', ampGeneration: 'AMP 生成', ampFilter: 'AMP 筛选',
       candidateLibrary: '候选肽库', taskCenter: '任务中心',
       serverProduction: '服务器生产', reports: '报告', admin: '管理',
     },
