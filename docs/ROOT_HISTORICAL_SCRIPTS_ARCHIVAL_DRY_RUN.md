@@ -4,6 +4,43 @@ Date: 2026-06-11
 Scope: `/home/xh/kxc/ampg可视化/服务器版`
 Status: dry-run planning only
 
+## Execution Result - Root Historical Scripts Git-Move Archival - 2026-06-11
+
+Status: executed with `git mv`; no scripts were deleted or run.
+
+Execution summary:
+
+- Moved the 12 audited tracked root historical scripts out of the repository
+  root.
+- Created only the archival directories needed for this migration:
+  `tools/analysis/legacy/`, `tools/ops/checks/`, and `tools/tests/legacy/`.
+- Kept `check_t8_*` with historical analysis utilities because these files are
+  T8 / PseKRAAC feature-history checks, not active operational checks.
+- Left `.bak` files, `server-artifacts/`, `backend/data/`, model weights,
+  reports, the original AMPGen directory, and STAMP paths untouched.
+- Did not run any migrated script, compute workflow, batch workflow,
+  `SERVER_PRODUCTION`, `LOCAL_DEMO`, or `LOCAL_REAL_SMOKE`.
+- Did not modify frontend/backend business logic.
+- After migration, the repository root had no remaining `analyze_*.py`,
+  `check_*.py`, or `test_*.py` historical script files from the approved set.
+
+Final migration table:
+
+| Original root file | Final path |
+| --- | --- |
+| `analyze_fresh_features.py` | `tools/analysis/legacy/analyze_fresh_features.py` |
+| `analyze_training_cols.py` | `tools/analysis/legacy/analyze_training_cols.py` |
+| `analyze_training_cols2.py` | `tools/analysis/legacy/analyze_training_cols2.py` |
+| `analyze_training_order.py` | `tools/analysis/legacy/analyze_training_order.py` |
+| `check_t8_names.py` | `tools/analysis/legacy/check_t8_names.py` |
+| `check_t8_suffixes.py` | `tools/analysis/legacy/check_t8_suffixes.py` |
+| `check_t8_suffixes2.py` | `tools/analysis/legacy/check_t8_suffixes2.py` |
+| `test_correct_input.py` | `tools/tests/legacy/test_correct_input.py` |
+| `test_full_feature_fix.py` | `tools/tests/legacy/test_full_feature_fix.py` |
+| `test_full_features.py` | `tools/tests/legacy/test_full_features.py` |
+| `test_qsorder_fix.py` | `tools/tests/legacy/test_qsorder_fix.py` |
+| `test_qsorder_variants.py` | `tools/tests/legacy/test_qsorder_variants.py` |
+
 ## Boundary
 
 This document records a dry-run archival plan for tracked root historical
