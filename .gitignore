@@ -92,3 +92,7 @@ p6e_discriminator_export_work/
 p6f_mic_ecoli_work/
 p6f_mic_scorer_work/
 env_snapshots/
+
+# AMPGen local runtime env files
+app/.env.production
+backend/.env.bak*
