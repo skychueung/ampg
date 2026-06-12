@@ -372,7 +372,7 @@ export default function Generation() {
   }
 
   return (
-    <Layout title="AMPGen Server-Only" subtitle="服务器生成专用版">
+    <Layout title="AMPGen Server-Only" subtitle={t('generation.serverOnlySubtitle') as string}>
       <div className="space-y-6">
         {/* Page Header */}
         <motion.div
@@ -382,7 +382,7 @@ export default function Generation() {
         >
           <h2 className="text-[20px] font-semibold text-[#111827]">AMPGen Server-Only</h2>
           <p className="text-[14px] text-[#6B7280] mt-1">
-            本服务器版仅用于服务器真实生成与任务追踪，不提供本地演示模式。
+            {t('generation.serverOnlyDescription') as string}
           </p>
         </motion.div>
 
@@ -556,7 +556,7 @@ export default function Generation() {
                     </div>
                   )}
                   <p className="text-[11px] text-[#B45309] mt-1">
-                    本服务器版仅用于服务器真实生成与任务追踪，不提供本地演示模式。
+                    {t('generation.serverOnlyDescription') as string}
                   </p>
                 </div>
               )}
@@ -869,7 +869,7 @@ export default function Generation() {
               {logs.length > 0 && (genStatus === 'RUNNING' || genStatus === 'PENDING') && (
                 <div className="mb-4">
                   <span className="text-[12px] font-medium text-[#6B7280] uppercase tracking-[0.05em]">
-                    实时日志
+                    {t('generation.liveLogs') as string}
                   </span>
                   <div className="mt-1.5 space-y-0.5 max-h-[120px] overflow-y-auto bg-[#111827] rounded-[6px] px-3 py-2">
                     {logs.slice(-5).map((line, i) => (
@@ -917,7 +917,7 @@ export default function Generation() {
                   <div className="mb-4 p-3 rounded-[6px] bg-[#F0FDFA] border border-[#14B8A6] flex items-start gap-2.5">
                     <Info size={16} className="text-[#14B8A6] mt-0.5 flex-shrink-0" />
                     <p className="text-[13px] text-[#0F766E]">
-                      SERVER_PRODUCTION 服务器生成与任务追踪已启用；评分字段只显示真实接口返回值，不伪造 toxicity / hemolysis。
+                      {t('generation.serverProductionEnabled') as string}
                     </p>
                   </div>
                 )}
@@ -952,13 +952,13 @@ export default function Generation() {
                     onClick={() => navigate('/candidate-library')}
                     className="px-4 py-2 bg-[#F3F4F6] text-[#374151] text-[13px] font-medium rounded-[6px] hover:bg-[#E5E7EB] transition-colors"
                   >
-                    查看候选肽库
+                    {t('generation.viewCandidateLibrary') as string}
                   </button>
                   <button
                     onClick={() => navigate('/task-center')}
                     className="px-4 py-2 bg-[#F3F4F6] text-[#374151] text-[13px] font-medium rounded-[6px] hover:bg-[#E5E7EB] transition-colors"
                   >
-                    查看任务中心
+                    {t('generation.viewTaskCenter') as string}
                   </button>
                 </div>
               )}
