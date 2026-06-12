@@ -94,6 +94,39 @@
   }
 }
 
+@layer utilities {
+  /* Hero gradient: blue/teal/white tech aesthetic */
+  .hero-gradient {
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #f0fdfa 100%);
+  }
+
+  /* Gradient text: teal-blue */
+  .text-gradient {
+    background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card hover lift with shadow */
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -4px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Pulsing status dot */
+  .status-dot {
+    @apply w-2 h-2 rounded-full bg-emerald-500 relative inline-block;
+  }
+  .status-dot::after {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-60;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

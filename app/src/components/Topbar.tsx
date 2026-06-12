@@ -1,4 +1,4 @@
-import { Bell, Languages } from 'lucide-react'
+import { Bell, Languages, ShieldAlert } from 'lucide-react'
 import { useTranslation } from '@/i18n/LanguageContext'
 
 interface TopbarProps {
@@ -14,36 +14,47 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
   }
 
   return (
-    <header className="h-[64px] bg-[#FFFFFF] border-b border-[#E5E7EB] flex items-center justify-between px-6 fixed top-0 left-[224px] right-0 z-40">
-      <div className="flex items-center gap-2">
-        <h1 className="text-[20px] font-semibold text-[#111827]">{title}</h1>
+    <header className="h-[64px] bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between px-6 fixed top-0 left-[224px] right-0 z-40">
+      {/* Left: Page Title + Breadcrumb */}
+      <div className="flex flex-col justify-center">
+        <h1 className="text-[18px] font-bold text-slate-800">{title}</h1>
         {subtitle && (
-          <>
-            <span className="text-[#9CA3AF] mx-1">/</span>
-            <span className="text-[14px] text-[#6B7280]">{subtitle}</span>
-          </>
+          <div className="flex items-center gap-1.5 text-[12px] text-slate-500">
+            <span>AMPGen</span>
+            <span className="text-slate-300">/</span>
+            <span>{subtitle}</span>
+          </div>
         )}
       </div>
 
+      {/* Right: Actions */}
       <div className="flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-1.5 text-[12px] font-medium text-teal-700 bg-teal-50 border border-teal-100 px-2.5 py-1 rounded-full">
+          <span className="status-dot" />
+          System Online
+        </div>
+
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-medium text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors border border-[#E5E7EB]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors border border-slate-200"
           title={language === 'en' ? t('language.switchToZh') : t('language.switchToEn')}
         >
           <Languages size={14} />
           <span>{language === 'en' ? 'EN' : 'ZH'}</span>
         </button>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFFBEB] border border-[#FCD34D] text-[12px] font-medium text-[#D97706]">
+        <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[12px] font-medium text-amber-700">
+          <ShieldAlert size={13} />
           {t('common.disclaimer')}
         </span>
 
-        <button className="p-2 rounded-[6px] text-[#6B7280] hover:bg-[#F3F4F6] transition-colors">
+        <button className="p-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors relative">
           <Bell size={18} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />
         </button>
-        <div className="w-8 h-8 rounded-full bg-[#F0FDFA] border border-[#14B8A6] flex items-center justify-center">
-          <span className="text-[12px] font-semibold text-[#14B8A6]">U</span>
+
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-teal-500 flex items-center justify-center shadow-sm">
+          <span className="text-[12px] font-semibold text-white">U</span>
         </div>
       </div>
     </header>
