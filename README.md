@@ -1,171 +1,223 @@
 # AMPGen Visualization Platform
 
-> **AMPGen Agent Platform** — 将 AMPGen 从命令行生成模型升级为支持网页提交任务、服务器 GPU 生成、P6E/P6F 自动评分、combined shortlist、Candidate Review 可视化筛选的科研平台。
+> AMPGen Agent Platform — A web-based research platform for peptide generation, server-side GPU task submission, computational scoring, combined shortlist ranking, and candidate review visualization.
 
 ---
 
 ## Current Version Status
 
-- **Latest tag**: `v0.6.9-candidate-review` (`b54110d`)
-- **Next milestone**: `v0.7.0-release-ready` (docs completion in progress)
-- **Core function completion**: ~85%
+* **Latest tag**: `v0.6.9-candidate-review`
+* **Next milestone**: `v0.7.0-release-ready`
+* **Core function completion**: ~85%
+
+---
+
+## Overview
+
+AMPGen Visualization Platform upgrades AMPGen from a command-line generation model into an interactive research platform.
+
+The platform supports:
+
+* Web-based generation task submission
+* Server-side GPU generation workflow
+* Automatic computational scoring
+* Combined shortlist ranking
+* Candidate Review Workbench
+* CSV / FASTA / JSON / Markdown export
+* Scientific boundary reminders for computational predictions
+
+This repository contains platform source code and documentation only.
+
+It does **not** include private server addresses, credentials, model weights, runtime artifacts, databases, or experimental validation data.
 
 ---
 
 ## Core Capabilities
 
-| Capability | Status | Details |
-|---|---|---|
-| SERVER_PRODUCTION single-run generation | ✅ | GPU `cuda:1`, count=3/30/300/500/1000 all passed |
-| Batch Queue chunked generation | ✅ | total_count=12/50/300/500/1000 all passed |
-| GPU real computation | ✅ | 2× RTX 4090, `cuda:1`, stable |
-| P6E amp_score | ✅ | XGBoost AMP discriminator, Acc=0.9640, F1=0.9602, AUC=0.9943 |
-| P6F S. aureus mic_saureus | ✅ | XGBoost baseline regressor, Test R²=0.8464 |
-| P6F combined shortlist | ✅ | 10 ranking types (Top100/50/20 × combined/low-mic/high-amp + representative50) |
-| Candidate Review Workbench | ✅ | Sort, filter, CSV download, scientific boundary banner |
-| CSV / FASTA / JSON / Markdown export | ✅ | Report export center |
-| Obsidian local memory | ✅ | 10 master source files + task reports |
-| GitHub tag chain | ✅ | v0.6.0–v0.6.9 all remote visible |
+| Capability                           | Status    | Details                                           |
+| ------------------------------------ | --------- | ------------------------------------------------- |
+| Single-run generation                | Completed | Small, medium, and large count tests passed       |
+| Batch Queue generation               | Completed | Chunked generation workflow passed                |
+| GPU computation workflow             | Completed | Server-side GPU workflow validated                |
+| AMP score prediction                 | Completed | XGBoost AMP discriminator integrated              |
+| S. aureus MIC prediction             | Completed | XGBoost baseline regressor integrated             |
+| Combined shortlist                   | Completed | Multiple ranking strategies supported             |
+| Candidate Review Workbench           | Completed | Sort, filter, inspect, and export candidates      |
+| CSV / FASTA / JSON / Markdown export | Completed | Report export center available                    |
+| Local documentation memory           | Completed | Project notes and task reports maintained locally |
+| Version tag chain                    | Completed | v0.6.0–v0.6.9 completed                           |
 
 ---
 
 ## Current Null / Unsupported Fields
 
-| Field | Status | Reason |
-|---|---|---|
-| `mic_ecoli` | `null` | E. coli data is git-lfs pointer; no model trained |
-| `toxicity_risk` | `null` | No toxicity prediction model integrated |
-| `hemolysis_risk` | `null` | No hemolysis prediction model integrated |
-| Wet-lab validation | N/A | Platform is computational only |
+| Field              | Status       | Reason                                            |
+| ------------------ | ------------ | ------------------------------------------------- |
+| `mic_ecoli`        | `null`       | E. coli dataset is unavailable for model training |
+| `toxicity_risk`    | `null`       | No toxicity prediction model integrated           |
+| `hemolysis_risk`   | `null`       | No hemolysis prediction model integrated          |
+| Wet-lab validation | Not included | This platform is computational only               |
 
 ---
 
-## Port Rules
+## Scientific Boundary
 
-| Service | Backend | Frontend |
-|---|---|---|
-| **AMPGen** | `18601` | `18600` |
-| **STAMP** | `8001` | `8080` |
+All scores are computational predictions.
 
-- AMPGen must **not** occupy 8001/8080.
-- STAMP ports are reserved and must **not** be modified.
-- Local frontend dev server may use 3000; server deployment must use 18600.
+None of the generated candidates, scores, rankings, or shortlist results should be treated as experimentally validated conclusions.
 
----
+* `amp_score` is a computational AMP discriminator prediction.
+* `mic_saureus` is a computational MIC regressor prediction.
+* `mic_ecoli` is currently `null`.
+* `toxicity_risk` is currently `null`.
+* `hemolysis_risk` is currently `null`.
+* `shortlist`, `representative`, `similarity`, and `motif` results only represent computational screening.
+* All candidate peptides require independent wet-lab validation before biological, clinical, or commercial conclusions are made.
 
-## Scientific Boundary (Summary)
-
-> **All scores are computational predictions. None are experimentally validated.**
-
-- `amp_score` — P6E XGBoost AMP discriminator **prediction**, not an experimental MIC.
-- `mic_saureus` — P6F XGBoost baseline regressor **prediction**, not an experimentally measured MIC.
-- `mic_ecoli` — Currently `null`. No model or data available.
-- `shortlist` / `representative` — Computational screening and deduplication. Not experimental validation.
-- **All candidate peptides require wet-lab validation** before any experimental conclusion can be drawn.
-
-**Do not forge MIC, toxicity, hemolysis, or wet-lab conclusions.**
-
-See [docs/SCIENCE_BOUNDARY.md](./docs/SCIENCE_BOUNDARY.md) for full details.
+Do not forge MIC values, toxicity results, hemolysis results, or wet-lab conclusions.
 
 ---
 
 ## Quick Start
 
-### Local Development
+### Backend
 
 ```powershell
-# Terminal 1: Backend
 cd backend
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 18601
+```
 
-# Terminal 2: Frontend
+### Frontend
+
+```powershell
 cd app
-npm run dev        # http://localhost:3000 (dev mode)
+npm install
+npm run dev
 ```
 
-### Server Deployment (stamp218)
+Default local access:
 
-```bash
-# Backend
-ssh xh@192.168.31.218
-cd /home/xh/kxc/ampg可视化/backend
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 18601
-
-# Frontend
-cd /home/xh/kxc/ampg可视化/app
-npm run preview -- --host 0.0.0.0 --port 18600
+```text
+Frontend: http://127.0.0.1:18600
+Backend:  http://127.0.0.1:18601
 ```
+
+---
+
+## Server Deployment
+
+The platform can be deployed on a Linux GPU server.
+
+Default ports:
+
+| Component | Port  |
+| --------- | ----- |
+| Backend   | 18601 |
+| Frontend  | 18600 |
+
+Real server addresses, usernames, credentials, private paths, model weights, runtime artifacts, and private datasets are not included in this repository.
 
 ---
 
 ## Technology Stack
 
-- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React
-- **Backend**: FastAPI, SQLAlchemy, SQLite, Uvicorn
-- **Generation Engine**: AMPGen (evodiff, GPU `cuda:1` on stamp218)
-- **Scoring**: P6E XGBoost AMP discriminator, P6F XGBoost baseline MIC regressor
-- **Testing**: pytest, TestClient
+* **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Framer Motion, Lucide React
+* **Backend**: Python web backend, SQLAlchemy, SQLite, Uvicorn
+* **Generation Engine**: AMPGen-based peptide generation workflow
+* **Scoring**: XGBoost-based AMP and MIC prediction modules
+* **Testing**: pytest, TestClient
 
 ---
 
 ## Project Structure
 
-```
+```text
 .
-├── app/                          # React frontend
+├── app/
 │   ├── src/
-│   │   ├── api/                 # API clients
-│   │   ├── pages/               # Page components
+│   │   ├── pages/
+│   │   ├── components/
+│   │   ├── services/
 │   │   └── ...
 │   └── package.json
-├── backend/                      # FastAPI backend
+├── backend/
 │   ├── app/
-│   │   ├── routers/             # API routers
-│   │   ├── runners/             # Background task runners
-│   │   ├── scorers/             # P6E / P6F scoring modules
-│   │   ├── models/              # SQLAlchemy models
-│   │   └── services/            # Business services
-│   ├── tests/                   # pytest tests
+│   │   ├── routers/
+│   │   ├── runners/
+│   │   ├── scorers/
+│   │   ├── models/
+│   │   └── services/
+│   ├── tests/
 │   └── requirements.txt
-├── scripts/                      # Startup / healthcheck / smoke scripts
-├── docs/                         # Documentation
+├── scripts/
+├── docs/
 │   ├── V070_RELEASE_NOTES.md
 │   ├── USER_GUIDE_CANDIDATE_REVIEW.md
 │   ├── SCIENCE_BOUNDARY.md
 │   ├── RUNTIME_CONFIG_AND_COMPUTE_BOUNDARY.md
-│   ├── DEPLOYMENT_STAMP218.md
+│   ├── DEPLOYMENT.md
 │   ├── ARTIFACTS_AND_REPORTS.md
 │   ├── VERSION_TAGS.md
 │   ├── LOCAL_AGENT_INTEGRATION_PLAN.md
-│   ├── RUNBOOK.md
-│   └── ...
-├── README.md                     # This file
-└── .env.example                  # Environment template (no real values)
+│   └── RUNBOOK.md
+├── README.md
+└── .env.example
 ```
 
 ---
 
-## GitHub Notes
+## What Should Not Be Committed
 
-**Do not commit**:
+Do not commit:
 
-- `.env` files (real credentials)
-- SQLite databases (`*.db`)
-- `reports/` / `artifacts/` / `server-artifacts/`
-- Model weight files (`.pt`, `.pth`, `.ckpt`, `.safetensors`, `.bin`, `.joblib`)
-- `venv/` / `node_modules/` / `dist/` (except server preview build)
-- Obsidian vault
-- Tokens, passwords, or keys
+* Real `.env` files
+* Passwords, tokens, keys, or credentials
+* SQLite databases
+* Runtime reports
+* Runtime artifacts
+* Server artifacts
+* Model weight files
+* Private datasets
+* Local virtual environments
+* `node_modules`
+* Build output directories
+* Obsidian vault files
+* Private server paths
+* Real server addresses
+* Personal account information
 
-Only platform **source code** and **documentation** belong in the GitHub repository.
+Only platform source code, public-safe documentation, and example configuration templates belong in this repository.
+
+---
+
+## Repository Purpose
+
+This repository is intended for:
+
+* Research platform development
+* Computational peptide generation workflow visualization
+* Candidate ranking and review
+* Documentation of computational boundaries
+* Internal scientific software engineering
+
+This repository is not intended to provide:
+
+* Experimental validation
+* Clinical decision support
+* Commercial peptide claims
+* Private model weights
+* Private datasets
+* Private deployment credentials
 
 ---
 
 ## License
 
-Internal use. Experimental data must not be used as the sole basis for clinical or commercial decisions without independent wet-lab validation.
+Internal research use.
+
+Experimental data, computational predictions, and candidate rankings must not be used as the sole basis for clinical, commercial, or biological conclusions without independent wet-lab validation.
 
 ---
 
-*Current version: v0.6.9-candidate-review*  
-*Next: v0.7.0-release-ready (docs completion in progress)*
+Current version: `v0.6.9-candidate-review`
+Next milestone: `v0.7.0-release-ready`
